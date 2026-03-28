@@ -91,7 +91,7 @@ function generarRespuesta(mensaje, usuario = "anonimo") {
 
   // 👤 creador
   if (intent.creador) {
-    return "Mi creador es **ANGEL OFC DEV** 😎🔥";
+    return "Mi creador es ANGEL OFC DEV 😎🔥";
   }
 
   // 🤖 nombre
