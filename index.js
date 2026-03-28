@@ -1,5 +1,5 @@
 const express = require("express");
-const { generarRespuesta } = require("./ia");
+const { generarRespuesta, guardarMemoria } = require("./ia");
 
 const app = express();
 app.use(express.json());
@@ -11,12 +11,12 @@ function obtenerApiKey(req) {
   return req.headers["x-api-key"] || req.query.key;
 }
 
-// 🟢 Ruta principal
+// 🟢 ruta principal
 app.get("/", (req, res) => {
-  res.send("🚀 API funcionando con IA separada");
+  res.send("🚀 API JHAN-IA activa");
 });
 
-// 🤖 POST
+// 🤖 API IA
 app.post("/api/ia", async (req, res) => {
   const key = obtenerApiKey(req);
 
@@ -24,35 +24,40 @@ app.post("/api/ia", async (req, res) => {
     return res.status(401).json({ error: "API KEY inválida" });
   }
 
-  const { mensaje } = req.body;
+  const { mensaje, usuario = "anonimo" } = req.body;
 
   if (!mensaje) {
-    return res.json({ error: "Debes enviar un mensaje" });
+    return res.json({ error: "Falta mensaje" });
   }
 
-  const respuesta = generarRespuesta(mensaje);
+  const respuesta = generarRespuesta(mensaje, usuario);
 
-  // 💾 Guardar en tu API Python
+  guardarMemoria(usuario, mensaje, respuesta);
+
+  // 💾 guardar en tu DB
   try {
-    const response = await fetch("https://database-2poz.onrender.com/guardar", {
+    await fetch("https://database-2poz.onrender.com/guardar", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ mensaje, respuesta })
+      body: JSON.stringify({
+        usuario,
+        mensaje,
+        respuesta,
+        fecha: new Date().toISOString()
+      })
     });
-
-    console.log("STATUS:", response.status);
   } catch (error) {
-    console.error("Error guardando:", error);
+    console.log("Error guardando:", error);
   }
 
   res.json({ respuesta });
 });
 
-// 🚀 Puerto
+// 🚀 servidor
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-  console.log("Servidor corriendo en puerto " + PORT);
+  console.log("🤖 JHAN-IA corriendo en puerto " + PORT);
 });
