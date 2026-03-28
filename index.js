@@ -1,8 +1,10 @@
 const express = require("express");
+const cors = require("cors"); // 🔹 Importar CORS
 const { generarRespuesta, guardarMemoria } = require("./ia");
 
 const app = express();
 app.use(express.json());
+app.use(cors()); // 🔹 Habilitar CORS
 
 // 🔑 API KEY
 const apiKeys = ["123456"];
@@ -17,7 +19,7 @@ app.get("/", (req, res) => {
   res.send("🚀 API JHAN-IA activa");
 });
 
-// 🤖 GET /api/ia para navegador con query ?key=...&mensaje=...
+// 🤖 GET /api/ia para navegador con query
 app.get("/api/ia", async (req, res) => {
   const key = obtenerApiKey(req);
   const { mensaje, usuario = "anonimo" } = req.query;
@@ -33,18 +35,12 @@ app.get("/api/ia", async (req, res) => {
     const respuesta = generarRespuesta(mensaje, usuario);
     guardarMemoria(usuario, mensaje, respuesta);
 
-    // Guardar en DB (asíncrono)
     (async () => {
       try {
         const dbRes = await fetch("https://database-2poz.onrender.com/guardar", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            usuario,
-            mensaje,
-            respuesta,
-            fecha: new Date().toISOString()
-          })
+          body: JSON.stringify({ usuario, mensaje, respuesta, fecha: new Date().toISOString() })
         });
         const text = await dbRes.text();
         console.log("💾 Guardado en DB:", text);
@@ -76,18 +72,12 @@ app.post("/api/ia", async (req, res) => {
     const respuesta = generarRespuesta(mensaje, usuario);
     guardarMemoria(usuario, mensaje, respuesta);
 
-    // Guardar en DB (asíncrono)
     (async () => {
       try {
         const dbRes = await fetch("https://database-2poz.onrender.com/guardar", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            usuario,
-            mensaje,
-            respuesta,
-            fecha: new Date().toISOString()
-          })
+          body: JSON.stringify({ usuario, mensaje, respuesta, fecha: new Date().toISOString() })
         });
         const text = await dbRes.text();
         console.log("💾 Guardado en DB:", text);
