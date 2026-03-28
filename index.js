@@ -1,5 +1,6 @@
 const express = require("express");
 const brain = require("brain.js");
+const fetch = require("node-fetch");
 
 const app = express();
 app.use(express.json());
@@ -12,7 +13,6 @@ app.get("/", (req, res) => {
 // 🧠 IA
 const net = new brain.NeuralNetwork();
 
-// ✅ SOLO UN entrenamiento
 net.train([
   { input: { hola: 1 }, output: { saludo: 1 } },
   { input: { adios: 1 }, output: { despedida: 1 } },
@@ -67,8 +67,41 @@ function obtenerApiKey(req) {
   return req.headers["x-api-key"] || req.query.key;
 }
 
+// 🤖 GET
+app.get("/api/ia", async (req, res) => {
+  const key = obtenerApiKey(req);
+
+  if (!key || !apiKeys.includes(key)) {
+    return res.json({ error: "API KEY inválida" });
+  }
+
+  const mensaje = req.query.mensaje || "hola";
+
+  const input = procesar(mensaje);
+  const resultado = net.run(input);
+  const respuesta = responder(resultado);
+
+  // 💾 Guardar en tu API Python
+  try {
+    await fetch("https://database-2poz.onrender.com/guardar", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        mensaje,
+        respuesta
+      })
+    });
+  } catch (error) {
+    console.error("Error guardando en Python:", error);
+  }
+
+  res.json({ respuesta });
+});
+
 // 🤖 POST
-app.post("/api/ia", (req, res) => {
+app.post("/api/ia", async (req, res) => {
   const key = obtenerApiKey(req);
 
   if (!key || !apiKeys.includes(key)) {
@@ -85,27 +118,26 @@ app.post("/api/ia", (req, res) => {
   const resultado = net.run(input);
   const respuesta = responder(resultado);
 
-  res.json({ respuesta });
-});
-
-// 🌐 GET
-app.get("/api/ia", (req, res) => {
-  const key = obtenerApiKey(req);
-
-  if (!key || !apiKeys.includes(key)) {
-    return res.json({ error: "API KEY inválida" });
+  // 💾 Guardar en tu API Python
+  try {
+    await fetch("https://database-2poz.onrender.com/guardar", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        mensaje,
+        respuesta
+      })
+    });
+  } catch (error) {
+    console.error("Error guardando en Python:", error);
   }
 
-  const mensaje = req.query.mensaje || "hola";
-
-  const input = procesar(mensaje);
-  const resultado = net.run(input);
-  const respuesta = responder(resultado);
-
   res.json({ respuesta });
 });
 
-// 🚀 Puerto dinámico (Render)
+// 🚀 Puerto dinámico
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
