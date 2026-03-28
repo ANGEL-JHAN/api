@@ -1,5 +1,4 @@
 const express = require("express");
-const fetch = require("node-fetch"); // 🔥 FALTABA ESTO
 const { generarRespuesta, guardarMemoria } = require("./ia");
 
 const app = express();
