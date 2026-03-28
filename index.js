@@ -1,6 +1,6 @@
 const express = require("express");
 const brain = require("brain.js");
-const fetch = require("node-fetch");
+// ❌ Quitamos node-fetch (ya no es necesario)
 
 const app = express();
 app.use(express.json());
