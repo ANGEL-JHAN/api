@@ -1,6 +1,5 @@
 const express = require("express");
 const brain = require("brain.js");
-// ❌ Quitamos node-fetch (ya no es necesario)
 
 const app = express();
 app.use(express.json());
@@ -81,9 +80,9 @@ app.get("/api/ia", async (req, res) => {
   const resultado = net.run(input);
   const respuesta = responder(resultado);
 
-  // 💾 Guardar en tu API Python
+  // 💾 Guardar en tu API Python (con debug)
   try {
-    await fetch("https://database-2poz.onrender.com/guardar", {
+    const response = await fetch("https://database-2poz.onrender.com/guardar", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -93,6 +92,12 @@ app.get("/api/ia", async (req, res) => {
         respuesta
       })
     });
+
+    console.log("STATUS:", response.status);
+
+    const text = await response.text();
+    console.log("RESPUESTA DB:", text);
+
   } catch (error) {
     console.error("Error guardando en Python:", error);
   }
@@ -118,9 +123,9 @@ app.post("/api/ia", async (req, res) => {
   const resultado = net.run(input);
   const respuesta = responder(resultado);
 
-  // 💾 Guardar en tu API Python
+  // 💾 Guardar en tu API Python (con debug)
   try {
-    await fetch("https://database-2poz.onrender.com/guardar", {
+    const response = await fetch("https://database-2poz.onrender.com/guardar", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -130,6 +135,12 @@ app.post("/api/ia", async (req, res) => {
         respuesta
       })
     });
+
+    console.log("STATUS:", response.status);
+
+    const text = await response.text();
+    console.log("RESPUESTA DB:", text);
+
   } catch (error) {
     console.error("Error guardando en Python:", error);
   }
