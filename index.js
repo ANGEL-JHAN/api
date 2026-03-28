@@ -93,6 +93,24 @@ app.post("/api/ia", async (req, res) => {
   }
 });
 
+// --- Endpoint de chat con IA y respuesta de voz automática ---
+app.post('/chat', (req, res) => {
+    const { mensaje, usuario = "anonimo" } = req.body;
+    if (!mensaje) return res.status(400).json({ error: "Escribe un mensaje" });
+
+    try {
+        // Usamos tu función de IA
+        const respuesta = generarRespuesta(mensaje, usuario);
+        guardarMemoria(usuario, mensaje, respuesta);
+
+        // Devolvemos solo texto, el front-end se encargará de reproducir la voz
+        res.json({ respuesta });
+    } catch (err) {
+        console.error("❌ Error procesando /chat:", err);
+        res.status(500).json({ error: "Error procesando la IA" });
+    }
+});
+
 // 🚀 Servidor
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
