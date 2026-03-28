@@ -126,7 +126,7 @@ function generarRespuesta(mensaje, usuario = "anonimo") {
 
   // 🤖 identidad
   if (intent.identidad) {
-    return "Soy JHAN-IA, una inteligencia creada por **ANGEL OFC DEV** 🤖🔥";
+    return "Soy JHAN-IA, una inteligencia creada por ANGEL OFC DEV 🤖🔥";
   }
 
   // 🙏 gracias
