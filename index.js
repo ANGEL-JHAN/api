@@ -12,21 +12,7 @@ app.get("/", (req, res) => {
 // 🧠 IA
 const net = new brain.NeuralNetwork();
 
-net.train([
-  { input: { hola: 1 }, output: { saludo: 1 } },
-  { input: { adios: 1 }, output: { despedida: 1 } },
-  { input: { ayuda: 1 }, output: { ayuda: 1 } }
-]);
-
-function procesar(texto) {
-  texto = texto.toLowerCase();
-  return {
-    hola: texto.includes("hola") ? 1 : 0,
-    adios: texto.includes("adios") ? 1 : 0,
-    ayuda: texto.includes("ayuda") ? 1 : 0
-  };
-}
-
+// ✅ SOLO UN entrenamiento
 net.train([
   { input: { hola: 1 }, output: { saludo: 1 } },
   { input: { adios: 1 }, output: { despedida: 1 } },
@@ -41,15 +27,47 @@ net.train([
   { input: { gracias: 1 }, output: { agradecimiento: 1 } }
 ]);
 
+// 🔄 Procesar texto
+function procesar(texto) {
+  texto = texto.toLowerCase();
+
+  return {
+    hola: texto.includes("hola") ? 1 : 0,
+    adios: texto.includes("adios") ? 1 : 0,
+    ayuda: texto.includes("ayuda") ? 1 : 0,
+
+    quien: texto.includes("quien") ? 1 : 0,
+    eres: texto.includes("eres") ? 1 : 0,
+    nombre: texto.includes("nombre") ? 1 : 0,
+
+    ok: texto.includes("ok") ? 1 : 0,
+    oke: texto.includes("oke") ? 1 : 0,
+    gracias: texto.includes("gracias") ? 1 : 0
+  };
+}
+
+// 🤖 Responder
+function responder(r) {
+  if (r.saludo > 0.5) return "Hola 👋";
+  if (r.despedida > 0.5) return "Adiós 🚀";
+  if (r.ayuda > 0.5) return "¿En qué te ayudo?";
+
+  if (r.identidad > 0.5) return "Soy tu IA creada por ti 😎";
+  if (r.confirmacion > 0.5) return "Perfecto 👍";
+  if (r.agradecimiento > 0.5) return "De nada 😊";
+
+  return "No entiendo 🤔";
+}
+
 // 🔑 API KEYS
 const apiKeys = ["123456"];
 
-// 🔐 Obtener API KEY (header o URL)
+// 🔐 Obtener API KEY
 function obtenerApiKey(req) {
   return req.headers["x-api-key"] || req.query.key;
 }
 
-// 🤖 POST protegido
+// 🤖 POST
 app.post("/api/ia", (req, res) => {
   const key = obtenerApiKey(req);
 
@@ -70,7 +88,7 @@ app.post("/api/ia", (req, res) => {
   res.json({ respuesta });
 });
 
-// 🌐 GET protegido
+// 🌐 GET
 app.get("/api/ia", (req, res) => {
   const key = obtenerApiKey(req);
 
@@ -87,7 +105,7 @@ app.get("/api/ia", (req, res) => {
   res.json({ respuesta });
 });
 
-// 🔥 IMPORTANTE PARA RENDER
+// 🚀 Puerto dinámico (Render)
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
