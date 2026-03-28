@@ -46,32 +46,29 @@ app.post("/api/ia", async (req, res) => {
     return res.status(500).json({ error: "Error procesando la IA" });
   }
 
-  // Guardar en tu DB externa
-  try {
-    const dbRes = await fetch("https://database-2poz.onrender.com/guardar", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        usuario,
-        mensaje,
-        respuesta,
-        fecha: new Date().toISOString()
-      })
-    });
+  // Guardar en tu DB externa (pero no bloquea la respuesta al bot)
+  (async () => {
+    try {
+      const dbRes = await fetch("https://database-2poz.onrender.com/guardar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          usuario,
+          mensaje,
+          respuesta,
+          fecha: new Date().toISOString()
+        })
+      });
 
-    if (!dbRes.ok) {
-      throw new Error(`DB respondió con status ${dbRes.status}`);
+      const text = await dbRes.text();
+      console.log("💾 Guardado en DB:", text);
+    } catch (error) {
+      console.error("❌ Error guardando en DB:", error.message);
+      // No bloquea la respuesta al bot
     }
+  })();
 
-    const text = await dbRes.text();
-    console.log("💾 Guardado en DB:", text);
-
-  } catch (error) {
-    console.error("❌ Error guardando en DB:", error.message);
-    return res.status(503).json({ error: "La API o DB está dormida, intenta más tarde" });
-  }
-
-  // Responder al cliente
+  // Responder al cliente inmediatamente
   res.json({ respuesta });
 });
 
