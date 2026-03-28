@@ -12,6 +12,6 @@
   "dependencies": {
     "brain.js": "^1.6.1",
     "cors": "^2.8.6",
-    "express": "^5.2.1",
+    "express": "^5.2.1"
   }
 }
