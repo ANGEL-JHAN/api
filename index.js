@@ -1,8 +1,16 @@
 const express = require("express");
 const brain = require("brain.js");
 
+// ✅ IMPORTANTE: activar fetch en Node
+const fetch = (...args) => import("node-fetch").then(({ default: fetch }) => fetch(...args));
+
 const app = express();
 app.use(express.json());
+
+// ✅ Ruta raíz (arregla "Cannot GET /")
+app.get("/", (req, res) => {
+  res.send("🚀 JHAN-IA funcionando correctamente");
+});
 
 // 🧠 Memoria por usuario
 const memoria = {};
@@ -36,7 +44,7 @@ function procesar(texto) {
   };
 }
 
-// 🎲 Respuestas random
+// 🎲 Random
 function random(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
@@ -136,7 +144,7 @@ app.post("/api/ia", async (req, res) => {
     respuesta
   });
 
-  // 💾 guardar en DB
+  // 💾 guardar en DB (con debug)
   try {
     const response = await fetch("https://database-2poz.onrender.com/guardar", {
       method: "POST",
@@ -151,12 +159,13 @@ app.post("/api/ia", async (req, res) => {
       })
     });
 
-    console.log("STATUS:", response.status);
+    console.log("✅ STATUS DB:", response.status);
+
     const text = await response.text();
-    console.log("RESPUESTA DB:", text);
+    console.log("📦 RESPUESTA DB:", text);
 
   } catch (error) {
-    console.log("Error guardando:", error);
+    console.log("❌ Error guardando:", error);
   }
 
   res.json({ respuesta });
