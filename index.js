@@ -17,59 +17,90 @@ app.get("/", (req, res) => {
   res.send("🚀 API JHAN-IA activa");
 });
 
-// 🌐 GET para pruebas de la API en navegador
-app.get("/api/ia", (req, res) => {
-  res.send("✅ API IA activa. Usa POST para enviar mensajes.");
-});
-
-// 🤖 POST /api/ia
-app.post("/api/ia", async (req, res) => {
+// 🤖 GET /api/ia para navegador con query ?key=...&mensaje=...
+app.get("/api/ia", async (req, res) => {
   const key = obtenerApiKey(req);
+  const { mensaje, usuario = "anonimo" } = req.query;
 
   if (!key || !apiKeys.includes(key)) {
     return res.status(401).json({ error: "API KEY inválida" });
   }
+  if (!mensaje) {
+    return res.json({ error: "Falta mensaje en query" });
+  }
 
+  try {
+    const respuesta = generarRespuesta(mensaje, usuario);
+    guardarMemoria(usuario, mensaje, respuesta);
+
+    // Guardar en DB (asíncrono)
+    (async () => {
+      try {
+        const dbRes = await fetch("https://database-2poz.onrender.com/guardar", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            usuario,
+            mensaje,
+            respuesta,
+            fecha: new Date().toISOString()
+          })
+        });
+        const text = await dbRes.text();
+        console.log("💾 Guardado en DB:", text);
+      } catch (err) {
+        console.error("❌ Error guardando en DB:", err.message);
+      }
+    })();
+
+    res.json({ respuesta });
+  } catch (err) {
+    console.error("❌ Error procesando mensaje:", err);
+    res.status(500).json({ error: "Error procesando la IA" });
+  }
+});
+
+// 🤖 POST /api/ia para bot
+app.post("/api/ia", async (req, res) => {
+  const key = obtenerApiKey(req);
   const { mensaje, usuario = "anonimo" } = req.body;
 
+  if (!key || !apiKeys.includes(key)) {
+    return res.status(401).json({ error: "API KEY inválida" });
+  }
   if (!mensaje) {
     return res.status(400).json({ error: "Falta mensaje" });
   }
 
-  // Generar respuesta del bot
-  let respuesta;
   try {
-    respuesta = generarRespuesta(mensaje, usuario);
+    const respuesta = generarRespuesta(mensaje, usuario);
     guardarMemoria(usuario, mensaje, respuesta);
+
+    // Guardar en DB (asíncrono)
+    (async () => {
+      try {
+        const dbRes = await fetch("https://database-2poz.onrender.com/guardar", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            usuario,
+            mensaje,
+            respuesta,
+            fecha: new Date().toISOString()
+          })
+        });
+        const text = await dbRes.text();
+        console.log("💾 Guardado en DB:", text);
+      } catch (err) {
+        console.error("❌ Error guardando en DB:", err.message);
+      }
+    })();
+
+    res.json({ respuesta });
   } catch (err) {
-    console.error("❌ Error en IA:", err);
-    return res.status(500).json({ error: "Error procesando la IA" });
+    console.error("❌ Error procesando mensaje:", err);
+    res.status(500).json({ error: "Error procesando la IA" });
   }
-
-  // Guardar en tu DB externa (pero no bloquea la respuesta al bot)
-  (async () => {
-    try {
-      const dbRes = await fetch("https://database-2poz.onrender.com/guardar", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          usuario,
-          mensaje,
-          respuesta,
-          fecha: new Date().toISOString()
-        })
-      });
-
-      const text = await dbRes.text();
-      console.log("💾 Guardado en DB:", text);
-    } catch (error) {
-      console.error("❌ Error guardando en DB:", error.message);
-      // No bloquea la respuesta al bot
-    }
-  })();
-
-  // Responder al cliente inmediatamente
-  res.json({ respuesta });
 });
 
 // 🚀 Servidor
