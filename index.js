@@ -4,7 +4,7 @@ const brain = require("brain.js");
 const app = express();
 app.use(express.json());
 
-// 🧠 Memoria por usuario (tipo ChatGPT)
+// 🧠 Memoria por usuario
 const memoria = {};
 
 // 🧠 IA
@@ -26,47 +26,80 @@ function procesar(texto) {
     saludo: texto.includes("hola") || texto.includes("buenas") ? 1 : 0,
     despedida: texto.includes("adios") || texto.includes("bye") ? 1 : 0,
     ayuda: texto.includes("ayuda") ? 1 : 0,
-    identidad: texto.includes("quien eres") || texto.includes("tu nombre") ? 1 : 0,
+    identidad:
+      texto.includes("quien eres") ||
+      texto.includes("tu nombre") ||
+      texto.includes("como te llamas")
+        ? 1
+        : 0,
     agradecimiento: texto.includes("gracias") ? 1 : 0
   };
 }
 
-// 🎲 Respuestas tipo humano
+// 🎲 Respuestas random
 function random(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-// 🤖 Generar respuesta estilo ChatGPT
+// 🤖 Generar respuesta
 function generarRespuesta(mensaje, usuario) {
+  const texto = mensaje.toLowerCase();
   const input = procesar(mensaje);
   const resultado = net.run(input);
 
-  // 🧠 contexto anterior
   const historial = memoria[usuario] || [];
 
+  // 👤 CREADOR
+  if (
+    texto.includes("quien te creo") ||
+    texto.includes("quien es tu creador") ||
+    texto.includes("quien te hizo") ||
+    texto.includes("creador")
+  ) {
+    return "Mi creador es **ANGEL OFC DEV** 😎🔥";
+  }
+
+  // 🤖 NOMBRE
+  if (
+    texto.includes("como te llamas") ||
+    texto.includes("cual es tu nombre") ||
+    texto.includes("tu nombre")
+  ) {
+    return "Mi nombre es JHAN-IA 🤖";
+  }
+
+  // 💬 RESPUESTAS IA
   if (resultado.saludo > 0.5) {
-    return random(["Hola 👋", "Hey 😎", "Buenas 🔥"]);
+    return random([
+      "Hola 👋 soy JHAN-IA",
+      "Hey 😎 aquí JHAN-IA",
+      "Buenas 🔥 soy JHAN-IA"
+    ]);
   }
 
   if (resultado.despedida > 0.5) {
-    return random(["Adiós 👋", "Nos vemos 😎"]);
+    return random([
+      "Adiós 👋",
+      "Nos vemos 😎",
+      "Hasta luego 🔥"
+    ]);
   }
 
   if (resultado.ayuda > 0.5) {
-    return "Claro, dime qué necesitas 😊";
+    return "Claro, soy JHAN-IA 🤖 ¿en qué te ayudo?";
   }
 
   if (resultado.identidad > 0.5) {
-    return "Soy tu IA estilo ChatGPT creada por ti 🤖🔥";
+    return "Soy JHAN-IA 🤖, una IA creada por **ANGEL OFC DEV** 🔥";
   }
 
   if (resultado.agradecimiento > 0.5) {
     return "De nada 😎";
   }
 
-  // 🧠 respuesta con contexto
+  // 🧠 contexto
   if (historial.length > 0) {
-    return "Hmm 🤔, antes me dijiste: '" + historial.slice(-1)[0].mensaje + "'";
+    return "Hmm 🤔, antes dijiste: '" + historial.slice(-1)[0].mensaje + "'";
   }
 
   return "Interesante... cuéntame más 🤖";
@@ -79,7 +112,7 @@ function obtenerApiKey(req) {
   return req.headers["x-api-key"] || req.query.key;
 }
 
-// 🤖 API principal
+// 🤖 API
 app.post("/api/ia", async (req, res) => {
   const key = obtenerApiKey(req);
 
@@ -95,7 +128,7 @@ app.post("/api/ia", async (req, res) => {
 
   const respuesta = generarRespuesta(mensaje, usuario);
 
-  // 🧠 guardar memoria local
+  // 🧠 guardar memoria
   if (!memoria[usuario]) memoria[usuario] = [];
 
   memoria[usuario].push({
@@ -103,9 +136,9 @@ app.post("/api/ia", async (req, res) => {
     respuesta
   });
 
-  // 💾 guardar en tu DB (Render)
+  // 💾 guardar en DB
   try {
-    await fetch("https://database-2poz.onrender.com/guardar", {
+    const response = await fetch("https://database-2poz.onrender.com/guardar", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -117,6 +150,11 @@ app.post("/api/ia", async (req, res) => {
         fecha: new Date().toISOString()
       })
     });
+
+    console.log("STATUS:", response.status);
+    const text = await response.text();
+    console.log("RESPUESTA DB:", text);
+
   } catch (error) {
     console.log("Error guardando:", error);
   }
@@ -128,5 +166,5 @@ app.post("/api/ia", async (req, res) => {
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-  console.log("🤖 IA estilo ChatGPT activa en puerto " + PORT);
+  console.log("🤖 JHAN-IA activa en puerto " + PORT);
 });
