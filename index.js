@@ -7,16 +7,22 @@ app.use(express.json());
 // 🔑 API KEY
 const apiKeys = ["123456"];
 
+// Función para obtener API Key del header o query
 function obtenerApiKey(req) {
   return req.headers["x-api-key"] || req.query.key;
 }
 
-// 🟢 ruta principal
+// 🟢 Ruta raíz
 app.get("/", (req, res) => {
   res.send("🚀 API JHAN-IA activa");
 });
 
-// 🤖 API IA
+// 🌐 GET para pruebas de la API en navegador
+app.get("/api/ia", (req, res) => {
+  res.send("✅ API IA activa. Usa POST para enviar mensajes.");
+});
+
+// 🤖 POST /api/ia
 app.post("/api/ia", async (req, res) => {
   const key = obtenerApiKey(req);
 
@@ -27,20 +33,24 @@ app.post("/api/ia", async (req, res) => {
   const { mensaje, usuario = "anonimo" } = req.body;
 
   if (!mensaje) {
-    return res.json({ error: "Falta mensaje" });
+    return res.status(400).json({ error: "Falta mensaje" });
   }
 
-  const respuesta = generarRespuesta(mensaje, usuario);
+  // Generar respuesta del bot
+  let respuesta;
+  try {
+    respuesta = generarRespuesta(mensaje, usuario);
+    guardarMemoria(usuario, mensaje, respuesta);
+  } catch (err) {
+    console.error("❌ Error en IA:", err);
+    return res.status(500).json({ error: "Error procesando la IA" });
+  }
 
-  guardarMemoria(usuario, mensaje, respuesta);
-
-  // 💾 guardar en tu DB
+  // Guardar en tu DB externa
   try {
     const dbRes = await fetch("https://database-2poz.onrender.com/guardar", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         usuario,
         mensaje,
@@ -49,21 +59,24 @@ app.post("/api/ia", async (req, res) => {
       })
     });
 
-    const text = await dbRes.text();
+    if (!dbRes.ok) {
+      throw new Error(`DB respondió con status ${dbRes.status}`);
+    }
 
-    console.log("STATUS:", dbRes.status);
-    console.log("RESPUESTA DB:", text);
+    const text = await dbRes.text();
+    console.log("💾 Guardado en DB:", text);
 
   } catch (error) {
-    console.log("❌ Error guardando:", error);
+    console.error("❌ Error guardando en DB:", error.message);
+    return res.status(503).json({ error: "La API o DB está dormida, intenta más tarde" });
   }
 
+  // Responder al cliente
   res.json({ respuesta });
 });
 
-// 🚀 servidor
+// 🚀 Servidor
 const PORT = process.env.PORT || 3000;
-
 app.listen(PORT, () => {
-  console.log("🤖 JHAN-IA corriendo en puerto " + PORT);
+  console.log(`🤖 JHAN-IA corriendo en puerto ${PORT}`);
 });
