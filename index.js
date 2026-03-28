@@ -4,108 +4,82 @@ const brain = require("brain.js");
 const app = express();
 app.use(express.json());
 
-// 🟢 Ruta principal
-app.get("/", (req, res) => {
-  res.send("🚀 API con IA + API KEY funcionando");
-});
+// 🧠 Memoria por usuario (tipo ChatGPT)
+const memoria = {};
 
 // 🧠 IA
 const net = new brain.NeuralNetwork();
 
 net.train([
-  { input: { hola: 1 }, output: { saludo: 1 } },
-  { input: { adios: 1 }, output: { despedida: 1 } },
+  { input: { saludo: 1 }, output: { saludo: 1 } },
+  { input: { despedida: 1 }, output: { despedida: 1 } },
   { input: { ayuda: 1 }, output: { ayuda: 1 } },
-
-  { input: { quien: 1 }, output: { identidad: 1 } },
-  { input: { eres: 1 }, output: { identidad: 1 } },
-  { input: { nombre: 1 }, output: { identidad: 1 } },
-
-  { input: { ok: 1 }, output: { confirmacion: 1 } },
-  { input: { oke: 1 }, output: { confirmacion: 1 } },
-  { input: { gracias: 1 }, output: { agradecimiento: 1 } }
+  { input: { identidad: 1 }, output: { identidad: 1 } },
+  { input: { agradecimiento: 1 }, output: { agradecimiento: 1 } }
 ]);
 
-// 🔄 Procesar texto
+// 🔍 Procesar texto
 function procesar(texto) {
   texto = texto.toLowerCase();
 
   return {
-    hola: texto.includes("hola") ? 1 : 0,
-    adios: texto.includes("adios") ? 1 : 0,
+    saludo: texto.includes("hola") || texto.includes("buenas") ? 1 : 0,
+    despedida: texto.includes("adios") || texto.includes("bye") ? 1 : 0,
     ayuda: texto.includes("ayuda") ? 1 : 0,
-
-    quien: texto.includes("quien") ? 1 : 0,
-    eres: texto.includes("eres") ? 1 : 0,
-    nombre: texto.includes("nombre") ? 1 : 0,
-
-    ok: texto.includes("ok") ? 1 : 0,
-    oke: texto.includes("oke") ? 1 : 0,
-    gracias: texto.includes("gracias") ? 1 : 0
+    identidad: texto.includes("quien eres") || texto.includes("tu nombre") ? 1 : 0,
+    agradecimiento: texto.includes("gracias") ? 1 : 0
   };
 }
 
-// 🤖 Responder
-function responder(r) {
-  if (r.saludo > 0.5) return "Hola 👋";
-  if (r.despedida > 0.5) return "Adiós 🚀";
-  if (r.ayuda > 0.5) return "¿En qué te ayudo?";
-
-  if (r.identidad > 0.5) return "Soy tu IA creada por ti 😎";
-  if (r.confirmacion > 0.5) return "Perfecto 👍";
-  if (r.agradecimiento > 0.5) return "De nada 😊";
-
-  return "No entiendo 🤔";
+// 🎲 Respuestas tipo humano
+function random(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
 }
 
-// 🔑 API KEYS
+// 🤖 Generar respuesta estilo ChatGPT
+function generarRespuesta(mensaje, usuario) {
+  const input = procesar(mensaje);
+  const resultado = net.run(input);
+
+  // 🧠 contexto anterior
+  const historial = memoria[usuario] || [];
+
+  if (resultado.saludo > 0.5) {
+    return random(["Hola 👋", "Hey 😎", "Buenas 🔥"]);
+  }
+
+  if (resultado.despedida > 0.5) {
+    return random(["Adiós 👋", "Nos vemos 😎"]);
+  }
+
+  if (resultado.ayuda > 0.5) {
+    return "Claro, dime qué necesitas 😊";
+  }
+
+  if (resultado.identidad > 0.5) {
+    return "Soy tu IA estilo ChatGPT creada por ti 🤖🔥";
+  }
+
+  if (resultado.agradecimiento > 0.5) {
+    return "De nada 😎";
+  }
+
+  // 🧠 respuesta con contexto
+  if (historial.length > 0) {
+    return "Hmm 🤔, antes me dijiste: '" + historial.slice(-1)[0].mensaje + "'";
+  }
+
+  return "Interesante... cuéntame más 🤖";
+}
+
+// 🔑 API KEY
 const apiKeys = ["123456"];
 
-// 🔐 Obtener API KEY
 function obtenerApiKey(req) {
   return req.headers["x-api-key"] || req.query.key;
 }
 
-// 🤖 GET
-app.get("/api/ia", async (req, res) => {
-  const key = obtenerApiKey(req);
-
-  if (!key || !apiKeys.includes(key)) {
-    return res.json({ error: "API KEY inválida" });
-  }
-
-  const mensaje = req.query.mensaje || "hola";
-
-  const input = procesar(mensaje);
-  const resultado = net.run(input);
-  const respuesta = responder(resultado);
-
-  // 💾 Guardar en tu API Python (con debug)
-  try {
-    const response = await fetch("https://database-2poz.onrender.com/guardar", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        mensaje,
-        respuesta
-      })
-    });
-
-    console.log("STATUS:", response.status);
-
-    const text = await response.text();
-    console.log("RESPUESTA DB:", text);
-
-  } catch (error) {
-    console.error("Error guardando en Python:", error);
-  }
-
-  res.json({ respuesta });
-});
-
-// 🤖 POST
+// 🤖 API principal
 app.post("/api/ia", async (req, res) => {
   const key = obtenerApiKey(req);
 
@@ -113,44 +87,46 @@ app.post("/api/ia", async (req, res) => {
     return res.status(401).json({ error: "API KEY inválida" });
   }
 
-  const { mensaje } = req.body;
+  const { mensaje, usuario = "anonimo" } = req.body;
 
   if (!mensaje) {
-    return res.json({ error: "Debes enviar un mensaje" });
+    return res.json({ error: "Falta mensaje" });
   }
 
-  const input = procesar(mensaje);
-  const resultado = net.run(input);
-  const respuesta = responder(resultado);
+  const respuesta = generarRespuesta(mensaje, usuario);
 
-  // 💾 Guardar en tu API Python (con debug)
+  // 🧠 guardar memoria local
+  if (!memoria[usuario]) memoria[usuario] = [];
+
+  memoria[usuario].push({
+    mensaje,
+    respuesta
+  });
+
+  // 💾 guardar en tu DB (Render)
   try {
-    const response = await fetch("https://database-2poz.onrender.com/guardar", {
+    await fetch("https://database-2poz.onrender.com/guardar", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
+        usuario,
         mensaje,
-        respuesta
+        respuesta,
+        fecha: new Date().toISOString()
       })
     });
-
-    console.log("STATUS:", response.status);
-
-    const text = await response.text();
-    console.log("RESPUESTA DB:", text);
-
   } catch (error) {
-    console.error("Error guardando en Python:", error);
+    console.log("Error guardando:", error);
   }
 
   res.json({ respuesta });
 });
 
-// 🚀 Puerto dinámico
+// 🚀 servidor
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-  console.log("Servidor corriendo en puerto " + PORT + " 🔐🤖");
+  console.log("🤖 IA estilo ChatGPT activa en puerto " + PORT);
 });
