@@ -27,12 +27,19 @@ function procesar(texto) {
   };
 }
 
-function responder(r) {
-  if (r.saludo > 0.5) return "Hola 👋";
-  if (r.despedida > 0.5) return "Adiós 🚀";
-  if (r.ayuda > 0.5) return "¿En qué te ayudo?";
-  return "No entiendo 🤔";
-}
+net.train([
+  { input: { hola: 1 }, output: { saludo: 1 } },
+  { input: { adios: 1 }, output: { despedida: 1 } },
+  { input: { ayuda: 1 }, output: { ayuda: 1 } },
+
+  { input: { quien: 1 }, output: { identidad: 1 } },
+  { input: { eres: 1 }, output: { identidad: 1 } },
+  { input: { nombre: 1 }, output: { identidad: 1 } },
+
+  { input: { ok: 1 }, output: { confirmacion: 1 } },
+  { input: { oke: 1 }, output: { confirmacion: 1 } },
+  { input: { gracias: 1 }, output: { agradecimiento: 1 } }
+]);
 
 // 🔑 API KEYS
 const apiKeys = ["123456"];
