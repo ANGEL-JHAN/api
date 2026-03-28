@@ -1,4 +1,5 @@
 const express = require("express");
+const fetch = require("node-fetch"); // 🔥 FALTABA ESTO
 const { generarRespuesta, guardarMemoria } = require("./ia");
 
 const app = express();
@@ -36,7 +37,7 @@ app.post("/api/ia", async (req, res) => {
 
   // 💾 guardar en tu DB
   try {
-    await fetch("https://database-2poz.onrender.com/guardar", {
+    const dbRes = await fetch("https://database-2poz.onrender.com/guardar", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -48,8 +49,14 @@ app.post("/api/ia", async (req, res) => {
         fecha: new Date().toISOString()
       })
     });
+
+    const text = await dbRes.text();
+
+    console.log("STATUS:", dbRes.status);
+    console.log("RESPUESTA DB:", text);
+
   } catch (error) {
-    console.log("Error guardando:", error);
+    console.log("❌ Error guardando:", error);
   }
 
   res.json({ respuesta });
