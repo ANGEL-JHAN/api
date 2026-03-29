@@ -59,11 +59,14 @@
     const input = document.getElementById('usuario');
     const display = document.getElementById('apiKey');
 
+    // 🔹 Cambia esta URL por la de tu API en Render
+    const API_URL = "https://tu-api.onrender.com/generate-key";
+
     btn.addEventListener('click', async () => {
       const usuario = input.value.trim() || 'anonimo';
 
       try {
-        const res = await fetch('http://localhost:3000/generate-key', {
+        const res = await fetch(API_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ usuario })
