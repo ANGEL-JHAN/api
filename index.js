@@ -1,10 +1,14 @@
 const express = require("express");
 const cors = require("cors"); // 🔹 Importar CORS
+const path = require("path"); // 🔹 Importar path para servir HTML
 const { generarRespuesta, guardarMemoria } = require("./ia");
 
 const app = express();
 app.use(express.json());
 app.use(cors()); // 🔹 Habilitar CORS
+
+// 🔹 Servir archivos estáticos desde la raíz (para index.html)
+app.use(express.static(path.join(__dirname)));
 
 // 🔑 API KEY
 const apiKeys = ["123456"];
