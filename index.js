@@ -1,7 +1,9 @@
 const express = require("express");
 const cors = require("cors"); // 🔹 Importar CORS
 const path = require("path"); // 🔹 Importar path para servir HTML
+const fs = require("fs"); // 🔹 Para guardar las API Keys
 const { generarRespuesta, guardarMemoria } = require("./ia");
+const { v4: uuidv4 } = require("uuid");
 
 const app = express();
 app.use(express.json());
@@ -10,30 +12,55 @@ app.use(cors()); // 🔹 Habilitar CORS
 // 🔹 Servir archivos estáticos desde la raíz (para index.html)
 app.use(express.static(path.join(__dirname)));
 
-// 🔑 API KEY
-const apiKeys = ["123456"];
+// 🔑 API KEY por defecto
+let apiKeys = ["123456"];
+const KEYS_FILE = "keys.json";
 
-// Función para obtener API Key del header o query
+// 🔹 Cargar keys existentes al iniciar
+if (fs.existsSync(KEYS_FILE)) {
+  apiKeys = JSON.parse(fs.readFileSync(KEYS_FILE));
+}
+
+// 🔹 Función para obtener API Key del header o query
 function obtenerApiKey(req) {
   return req.headers["x-api-key"] || req.query.key;
 }
 
-// 🟢 Ruta raíz
-app.get("/", (req, res) => {
-  res.send("🚀 API JHAN-IA activa");
+// =========================
+// 🔹 Generador de API Key
+// =========================
+app.post("/generate-key", (req, res) => {
+  const { usuario = "anonimo" } = req.body;
+  const newKey = uuidv4();
+
+  apiKeys.push({ usuario, apiKey: newKey });
+  fs.writeFileSync(KEYS_FILE, JSON.stringify(apiKeys, null, 2));
+
+  res.json({
+    usuario,
+    apiKey: newKey,
+    mensaje: "Tu API Key fue generada correctamente"
+  });
 });
 
+// =========================
+// 🟢 Ruta raíz (opcional, ya sirve index.html)
+// =========================
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "index.html"));
+});
+
+// =========================
 // 🤖 GET /api/ia para navegador con query
+// =========================
 app.get("/api/ia", async (req, res) => {
   const key = obtenerApiKey(req);
   const { mensaje, usuario = "anonimo" } = req.query;
 
-  if (!key || !apiKeys.includes(key)) {
+  if (!key || !apiKeys.map(k => k.apiKey).includes(key)) {
     return res.status(401).json({ error: "API KEY inválida" });
   }
-  if (!mensaje) {
-    return res.json({ error: "Falta mensaje en query" });
-  }
+  if (!mensaje) return res.json({ error: "Falta mensaje en query" });
 
   try {
     const respuesta = generarRespuesta(mensaje, usuario);
@@ -60,17 +87,17 @@ app.get("/api/ia", async (req, res) => {
   }
 });
 
+// =========================
 // 🤖 POST /api/ia para bot
+// =========================
 app.post("/api/ia", async (req, res) => {
   const key = obtenerApiKey(req);
   const { mensaje, usuario = "anonimo" } = req.body;
 
-  if (!key || !apiKeys.includes(key)) {
+  if (!key || !apiKeys.map(k => k.apiKey).includes(key)) {
     return res.status(401).json({ error: "API KEY inválida" });
   }
-  if (!mensaje) {
-    return res.status(400).json({ error: "Falta mensaje" });
-  }
+  if (!mensaje) return res.status(400).json({ error: "Falta mensaje" });
 
   try {
     const respuesta = generarRespuesta(mensaje, usuario);
@@ -97,25 +124,26 @@ app.post("/api/ia", async (req, res) => {
   }
 });
 
-// --- Endpoint de chat con IA y respuesta de voz automática ---
-app.post('/chat', (req, res) => {
-    const { mensaje, usuario = "anonimo" } = req.body;
-    if (!mensaje) return res.status(400).json({ error: "Escribe un mensaje" });
+// =========================
+// 🔹 Endpoint de chat con IA
+// =========================
+app.post("/chat", (req, res) => {
+  const { mensaje, usuario = "anonimo" } = req.body;
+  if (!mensaje) return res.status(400).json({ error: "Escribe un mensaje" });
 
-    try {
-        // Usamos tu función de IA
-        const respuesta = generarRespuesta(mensaje, usuario);
-        guardarMemoria(usuario, mensaje, respuesta);
-
-        // Devolvemos solo texto, el front-end se encargará de reproducir la voz
-        res.json({ respuesta });
-    } catch (err) {
-        console.error("❌ Error procesando /chat:", err);
-        res.status(500).json({ error: "Error procesando la IA" });
-    }
+  try {
+    const respuesta = generarRespuesta(mensaje, usuario);
+    guardarMemoria(usuario, mensaje, respuesta);
+    res.json({ respuesta });
+  } catch (err) {
+    console.error("❌ Error procesando /chat:", err);
+    res.status(500).json({ error: "Error procesando la IA" });
+  }
 });
 
+// =========================
 // 🚀 Servidor
+// =========================
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🤖 JHAN-IA corriendo en puerto ${PORT}`);
