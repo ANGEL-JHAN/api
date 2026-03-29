@@ -1,27 +1,27 @@
 const express = require("express");
-const cors = require("cors"); // 🔹 Importar CORS
-const path = require("path"); // 🔹 Importar path para servir HTML
-const fs = require("fs"); // 🔹 Para guardar las API Keys
+const cors = require("cors");
+const path = require("path");
+const fs = require("fs");
 const { generarRespuesta, guardarMemoria } = require("./ia");
 const { v4: uuidv4 } = require("uuid");
 
 const app = express();
 app.use(express.json());
-app.use(cors()); // 🔹 Habilitar CORS
+app.use(cors());
 
-// 🔹 Servir archivos estáticos desde la raíz (para index.html)
+// Servir archivos estáticos (index.html, CSS, JS, etc.)
 app.use(express.static(path.join(__dirname)));
 
-// 🔑 API KEY por defecto
-let apiKeys = ["123456"];
+// 🔑 API KEY por defecto + carga desde keys.json
 const KEYS_FILE = "keys.json";
+let apiKeys = [{ usuario: "admin", apiKey: "123456" }]; // 🔹 Tu API vieja siempre válida
 
-// 🔹 Cargar keys existentes al iniciar
 if (fs.existsSync(KEYS_FILE)) {
-  apiKeys = JSON.parse(fs.readFileSync(KEYS_FILE));
+  const fileKeys = JSON.parse(fs.readFileSync(KEYS_FILE));
+  apiKeys = [...apiKeys, ...fileKeys]; // 🔹 Combina la key 123456 con las generadas
 }
 
-// 🔹 Función para obtener API Key del header o query
+// Función para obtener API Key del header o query
 function obtenerApiKey(req) {
   return req.headers["x-api-key"] || req.query.key;
 }
@@ -34,7 +34,8 @@ app.post("/generate-key", (req, res) => {
   const newKey = uuidv4();
 
   apiKeys.push({ usuario, apiKey: newKey });
-  fs.writeFileSync(KEYS_FILE, JSON.stringify(apiKeys, null, 2));
+  fs.writeFileSync(KEYS_FILE, JSON.stringify(apiKeys.filter(k => k.apiKey !== "123456"), null, 2)); 
+  // 🔹 No sobreescribimos la key "123456"
 
   res.json({
     usuario,
@@ -44,14 +45,14 @@ app.post("/generate-key", (req, res) => {
 });
 
 // =========================
-// 🟢 Ruta raíz (opcional, ya sirve index.html)
+// 🟢 Ruta raíz
 // =========================
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
 // =========================
-// 🤖 GET /api/ia para navegador con query
+// 🤖 GET /api/ia
 // =========================
 app.get("/api/ia", async (req, res) => {
   const key = obtenerApiKey(req);
@@ -88,7 +89,7 @@ app.get("/api/ia", async (req, res) => {
 });
 
 // =========================
-// 🤖 POST /api/ia para bot
+// 🤖 POST /api/ia
 // =========================
 app.post("/api/ia", async (req, res) => {
   const key = obtenerApiKey(req);
@@ -125,7 +126,7 @@ app.post("/api/ia", async (req, res) => {
 });
 
 // =========================
-// 🔹 Endpoint de chat con IA
+// 🔹 Endpoint de chat
 // =========================
 app.post("/chat", (req, res) => {
   const { mensaje, usuario = "anonimo" } = req.body;
@@ -141,9 +142,7 @@ app.post("/chat", (req, res) => {
   }
 });
 
-// =========================
 // 🚀 Servidor
-// =========================
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🤖 JHAN-IA corriendo en puerto ${PORT}`);
