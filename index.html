@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generador de API Key</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0a0f1a;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    h1 {
+      color: #ff3b3b;
+    }
+    input, button {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 5px;
+      border: none;
+      font-size: 1rem;
+    }
+    input {
+      width: 250px;
+    }
+    button {
+      background: #ff3b3b;
+      color: #fff;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    button:hover {
+      background: #e03232;
+    }
+    #apiKey {
+      margin-top: 20px;
+      padding: 10px;
+      background: #1a1f2a;
+      border-radius: 5px;
+      word-break: break-all;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Generador de API Key - JHAN-IA</h1>
+  <input type="text" id="usuario" placeholder="Tu nombre o usuario">
+  <button id="generarBtn">Generar API Key</button>
+
+  <div id="apiKey"></div>
+
+  <script>
+    const btn = document.getElementById('generarBtn');
+    const input = document.getElementById('usuario');
+    const display = document.getElementById('apiKey');
+
+    btn.addEventListener('click', async () => {
+      const usuario = input.value.trim() || 'anonimo';
+
+      try {
+        const res = await fetch('http://localhost:3000/generate-key', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ usuario })
+        });
+
+        const data = await res.json();
+
+        if (data.apiKey) {
+          display.innerHTML = `<strong>Usuario:</strong> ${data.usuario} <br> <strong>API Key:</strong> ${data.apiKey}`;
+        } else {
+          display.textContent = 'Error al generar API Key';
+        }
+
+      } catch (err) {
+        display.textContent = 'Error de conexión al servidor';
+        console.error(err);
+      }
+    });
+  </script>
+
+</body>
+</html>
