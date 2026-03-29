@@ -14,9 +14,11 @@
       align-items: center;
       justify-content: center;
       min-height: 100vh;
+      padding: 20px;
     }
     h1 {
       color: #ff3b3b;
+      margin-bottom: 10px;
     }
     input, button {
       padding: 10px;
@@ -44,6 +46,19 @@
       border-radius: 5px;
       word-break: break-all;
     }
+    #historial {
+      margin-top: 20px;
+      width: 300px;
+      background: #1a1f2a;
+      border-radius: 5px;
+      padding: 10px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    #historial li {
+      margin-bottom: 5px;
+      word-break: break-all;
+    }
   </style>
 </head>
 <body>
@@ -54,16 +69,25 @@
 
   <div id="apiKey"></div>
 
+  <h2>Historial de API Keys</h2>
+  <ul id="historial"></ul>
+
   <script>
     const btn = document.getElementById('generarBtn');
     const input = document.getElementById('usuario');
     const display = document.getElementById('apiKey');
+    const historial = document.getElementById('historial');
 
     // 🔹 Cambia esta URL por la de tu API en Render
     const API_URL = "https://mi-api-clnb.onrender.com/generate-key";
 
     btn.addEventListener('click', async () => {
-      const usuario = input.value.trim() || 'anonimo';
+      const usuario = input.value.trim();
+      
+      if (!usuario) {
+        alert("Por favor escribe un nombre de usuario");
+        return;
+      }
 
       try {
         const res = await fetch(API_URL, {
@@ -76,6 +100,11 @@
 
         if (data.apiKey) {
           display.innerHTML = `<strong>Usuario:</strong> ${data.usuario} <br> <strong>API Key:</strong> ${data.apiKey}`;
+
+          // 🔹 Agregar al historial
+          const li = document.createElement('li');
+          li.textContent = `${data.usuario}: ${data.apiKey}`;
+          historial.appendChild(li);
         } else {
           display.textContent = 'Error al generar API Key';
         }
