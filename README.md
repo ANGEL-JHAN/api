@@ -6,9 +6,9 @@
 
 ---
 
-## 🔹 Requisitos e Instalación
+### 🔹 Requisitos e Instalación
 
-1. Tener **Node.js** (v16+) en tu proyecto.  
+1️⃣ Tener **Node.js** (v16+) en tu proyecto.  
 2. Instalar dependencias necesarias si tu proyecto es Node.js:
 
 ```bash
