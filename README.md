@@ -30,3 +30,21 @@ Ejemplo
 const API_URL = "https://mi-api-clnb.onrender.com/api/ia";
 const API_KEY = "TU_API_KEY";
 const USUARIO = "nombre_usuario";
+
+##🚀 Uso
+
+Envía solicitudes a la API usando tu API Key:
+Headers:
+
+x-api-key: TU_API_KEY
+Content-Type: application/json
+
+Body JSON:
+
+
+{
+  "mensaje": "Hola",
+  "usuario": "nombre_usuario"
+}
+
+La API devolverá la respuesta de la IA en JSON.
