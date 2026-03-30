@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 const fs = require("fs");
+const fetch = require("node-fetch"); // 🔥 IMPORTANTE
 const { generarRespuesta, guardarMemoria } = require("./ia");
 const { v4: uuidv4 } = require("uuid");
 
@@ -9,25 +10,36 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Servir archivos estáticos (index.html, CSS, JS, etc.)
+// Servir archivos estáticos
 app.use(express.static(path.join(__dirname)));
 
-// 🔑 API KEY por defecto + carga desde keys.json
+// 🔑 ARCHIVO DE KEYS
 const KEYS_FILE = "keys.json";
-let apiKeys = [{ usuario: "admin", apiKey: "123456" }]; // 🔹 Tu API vieja siempre válida
 
+// 🔹 API KEY base
+let apiKeys = [
+  {
+    usuario: "admin",
+    apiKey: "123456",
+    plan: "admin",
+    uso: 0,
+    limite: 999999
+  }
+];
+
+// 🔹 Cargar keys guardadas
 if (fs.existsSync(KEYS_FILE)) {
   const fileKeys = JSON.parse(fs.readFileSync(KEYS_FILE));
-  apiKeys = [...apiKeys, ...fileKeys]; // 🔹 Combina la key 123456 con las generadas
+  apiKeys = [...apiKeys, ...fileKeys];
 }
 
-// Función para obtener API Key del header o query
+// 🔹 Obtener API KEY
 function obtenerApiKey(req) {
   return req.headers["x-api-key"] || req.query.key;
 }
 
 // =========================
-// 🔹 Generador de API Key
+// 🔹 GENERAR API KEY
 // =========================
 app.post("/api/generar-key", (req, res) => {
   const { usuario = "anonimo", plan = "free" } = req.body;
@@ -63,11 +75,30 @@ app.post("/api/generar-key", (req, res) => {
 });
 
 // =========================
-// 🟢 Ruta raíz
+// 🟢 ROOT
 // =========================
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
+
+// =========================
+// 🔐 VALIDACIÓN PRO
+// =========================
+function validarKey(key, res) {
+  const keyData = apiKeys.find(k => k.apiKey === key);
+
+  if (!keyData) {
+    res.status(401).json({ error: "API KEY inválida" });
+    return null;
+  }
+
+  if (keyData.uso >= keyData.limite) {
+    res.status(403).json({ error: "Límite de uso alcanzado" });
+    return null;
+  }
+
+  return keyData;
+}
 
 // =========================
 // 🤖 GET /api/ia
@@ -76,32 +107,50 @@ app.get("/api/ia", async (req, res) => {
   const key = obtenerApiKey(req);
   const { mensaje, usuario = "anonimo" } = req.query;
 
-  if (!key || !apiKeys.map(k => k.apiKey).includes(key)) {
-    return res.status(401).json({ error: "API KEY inválida" });
-  }
-  if (!mensaje) return res.json({ error: "Falta mensaje en query" });
+  const keyData = validarKey(key, res);
+  if (!keyData) return;
+
+  if (!mensaje) return res.json({ error: "Falta mensaje" });
 
   try {
     const respuesta = generarRespuesta(mensaje, usuario);
     guardarMemoria(usuario, mensaje, respuesta);
 
+    // 🔥 SUMAR USO
+    keyData.uso++;
+
+    fs.writeFileSync(
+      KEYS_FILE,
+      JSON.stringify(apiKeys.filter(k => k.apiKey !== "123456"), null, 2)
+    );
+
+    // 💾 Guardar en DB
     (async () => {
       try {
-        const dbRes = await fetch("https://database-2poz.onrender.com/guardar", {
+        await fetch("https://database-2poz.onrender.com/guardar", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ usuario, mensaje, respuesta, fecha: new Date().toISOString() })
+          body: JSON.stringify({
+            usuario,
+            mensaje,
+            respuesta,
+            fecha: new Date().toISOString()
+          })
         });
-        const text = await dbRes.text();
-        console.log("💾 Guardado en DB:", text);
       } catch (err) {
-        console.error("❌ Error guardando en DB:", err.message);
+        console.error("❌ Error DB:", err.message);
       }
     })();
 
-    res.json({ respuesta });
+    res.json({
+      respuesta,
+      uso: keyData.uso,
+      limite: keyData.limite,
+      restante: keyData.limite - keyData.uso
+    });
+
   } catch (err) {
-    console.error("❌ Error procesando mensaje:", err);
+    console.error("❌ Error IA:", err);
     res.status(500).json({ error: "Error procesando la IA" });
   }
 });
@@ -113,54 +162,77 @@ app.post("/api/ia", async (req, res) => {
   const key = obtenerApiKey(req);
   const { mensaje, usuario = "anonimo" } = req.body;
 
-  if (!key || !apiKeys.map(k => k.apiKey).includes(key)) {
-    return res.status(401).json({ error: "API KEY inválida" });
-  }
+  const keyData = validarKey(key, res);
+  if (!keyData) return;
+
   if (!mensaje) return res.status(400).json({ error: "Falta mensaje" });
 
   try {
     const respuesta = generarRespuesta(mensaje, usuario);
     guardarMemoria(usuario, mensaje, respuesta);
 
+    // 🔥 SUMAR USO
+    keyData.uso++;
+
+    fs.writeFileSync(
+      KEYS_FILE,
+      JSON.stringify(apiKeys.filter(k => k.apiKey !== "123456"), null, 2)
+    );
+
+    // 💾 Guardar en DB
     (async () => {
       try {
-        const dbRes = await fetch("https://database-2poz.onrender.com/guardar", {
+        await fetch("https://database-2poz.onrender.com/guardar", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ usuario, mensaje, respuesta, fecha: new Date().toISOString() })
+          body: JSON.stringify({
+            usuario,
+            mensaje,
+            respuesta,
+            fecha: new Date().toISOString()
+          })
         });
-        const text = await dbRes.text();
-        console.log("💾 Guardado en DB:", text);
       } catch (err) {
-        console.error("❌ Error guardando en DB:", err.message);
+        console.error("❌ Error DB:", err.message);
       }
     })();
 
-    res.json({ respuesta });
+    res.json({
+      respuesta,
+      uso: keyData.uso,
+      limite: keyData.limite,
+      restante: keyData.limite - keyData.uso
+    });
+
   } catch (err) {
-    console.error("❌ Error procesando mensaje:", err);
+    console.error("❌ Error IA:", err);
     res.status(500).json({ error: "Error procesando la IA" });
   }
 });
 
 // =========================
-// 🔹 Endpoint de chat
+// 💬 CHAT LIBRE
 // =========================
 app.post("/chat", (req, res) => {
   const { mensaje, usuario = "anonimo" } = req.body;
-  if (!mensaje) return res.status(400).json({ error: "Escribe un mensaje" });
+
+  if (!mensaje) {
+    return res.status(400).json({ error: "Escribe un mensaje" });
+  }
 
   try {
     const respuesta = generarRespuesta(mensaje, usuario);
     guardarMemoria(usuario, mensaje, respuesta);
+
     res.json({ respuesta });
+
   } catch (err) {
-    console.error("❌ Error procesando /chat:", err);
+    console.error("❌ Error /chat:", err);
     res.status(500).json({ error: "Error procesando la IA" });
   }
 });
 
-// 🚀 Servidor
+// 🚀 SERVER
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🤖 JHAN-IA corriendo en puerto ${PORT}`);
