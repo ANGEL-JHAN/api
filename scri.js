@@ -123,3 +123,45 @@ document.addEventListener('DOMContentLoaded',()=>{
     // Siempre mostrar login al cargar
     showLogin();
 });
+
+// ============================
+// 🔹 Inicializar Página Inteligente
+// ============================
+document.addEventListener('DOMContentLoaded', async () => {
+    const session = JSON.parse(localStorage.getItem('user_session'));
+
+    // 1️⃣ Si ya está logueado → redirige
+    if (session?.logged) {
+        window.location.href = 'index.html';
+        return;
+    }
+
+    // 2️⃣ Si no hay sesión, mostrar login o signup según si el usuario existe
+    // Pedimos al usuario su email/usuario para chequear
+    let userCheck = prompt("Ingresa tu email o usuario para continuar:");
+
+    if (!userCheck || userCheck.trim() === "") {
+        // Si no ingresa nada, mostramos el signup por defecto
+        showSignup();
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/check-user/${encodeURIComponent(userCheck.trim())}`);
+        const data = await res.json();
+
+        if (data.exists) {
+            // Usuario ya existe → mostrar login
+            document.getElementById('loginEmail').value = userCheck.trim();
+            showLogin();
+        } else {
+            // Usuario nuevo → mostrar signup y prellenar usuario/email
+            document.getElementById('signupUser').value = userCheck.trim();
+            showSignup();
+        }
+    } catch (err) {
+        console.error(err);
+        showToast("Error verificando usuario. Se mostrará registro por defecto.", "error");
+        showSignup();
+    }
+});
