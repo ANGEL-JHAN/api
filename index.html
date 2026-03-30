@@ -390,96 +390,131 @@
   <div class="toast" id="toast"></div>
 
   <script>
-    let ultimaKey = '';
+const API_URL = "https://mi-api-clnb.onrender.com";
 
-    function switchTab(tab) {
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-      if (tab === 'generar') {
-        document.querySelectorAll('.tab')[0].classList.add('active');
-        document.getElementById('panel-generar').classList.add('active');
-      } else {
-        document.querySelectorAll('.tab')[1].classList.add('active');
-        document.getElementById('panel-misapis').classList.add('active');
-        renderApis();
-      }
+let ultimaKey = '';
+let usuarioGlobal = '';
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+
+  if (tab === 'generar') {
+    document.querySelectorAll('.tab')[0].classList.add('active');
+    document.getElementById('panel-generar').classList.add('active');
+  } else {
+    document.querySelectorAll('.tab')[1].classList.add('active');
+    document.getElementById('panel-misapis').classList.add('active');
+    renderApis();
+  }
+}
+
+// 🔥 GENERAR KEY DESDE TU API
+async function generarKey() {
+  const usuario = document.getElementById('usuario').value.trim();
+  if (!usuario) {
+    showToast('⚠️ Escribe un nombre de usuario');
+    return;
+  }
+
+  const plan = document.getElementById('plan').value;
+
+  try {
+    const res = await fetch(`${API_URL}/api/generar-key`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ usuario, plan })
+    });
+
+    const data = await res.json();
+
+    if (!data.apiKey) throw new Error("Error");
+
+    ultimaKey = data.apiKey;
+    usuarioGlobal = usuario;
+
+    document.getElementById('keyGenerada').textContent = data.apiKey;
+    document.getElementById('resultado').classList.add('show');
+
+    document.getElementById('usuario').value = '';
+    showToast('✅ API Key creada en servidor');
+
+  } catch (err) {
+    showToast('❌ Error conectando con la API');
+    console.error(err);
+  }
+}
+
+// 📋 COPIAR
+function copiarKey() {
+  if (!ultimaKey) return;
+  navigator.clipboard.writeText(ultimaKey)
+    .then(() => showToast('📋 Copiada'));
+}
+
+function copiarExistente(key) {
+  navigator.clipboard.writeText(key)
+    .then(() => showToast('📋 Copiada'));
+}
+
+// 🔥 OBTENER KEYS DESDE TU API
+async function renderApis() {
+  let usuario = usuarioGlobal || prompt("Ingresa tu usuario");
+
+  if (!usuario) return;
+
+  usuarioGlobal = usuario;
+
+  const lista = document.getElementById('listaApis');
+  const contador = document.getElementById('contador');
+
+  try {
+    const res = await fetch(`${API_URL}/api/mis-keys/${usuario}`);
+    const keys = await res.json();
+
+    if (!keys.length) {
+      lista.innerHTML = '<div class="empty-state"><div class="empty-icon">🔑</div>No tienes API keys</div>';
+      contador.innerHTML = '';
+      return;
     }
 
-    function generarKey() {
-      const usuario = document.getElementById('usuario').value.trim();
-      if (!usuario) { showToast('⚠️ Escribe un nombre de usuario'); return; }
+    const typeClass = {
+      standard: 'type-standard',
+      pro: 'type-pro',
+      enterprise: 'type-enterprise'
+    };
 
-      const plan = document.getElementById('plan').value;
-      const prefijos = { standard: 'jhan_std_', pro: 'jhan_pro_', enterprise: 'jhan_ent_' };
-      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-      let key = prefijos[plan];
-      for (let i = 0; i < 36; i++) key += chars.charAt(Math.floor(Math.random() * chars.length));
+    lista.innerHTML = keys.map((k, i) =>
+      `<li class="api-item">
+        <div class="api-item-header">
+          <span class="api-item-user">${usuario}</span>
+          <span class="api-item-type ${typeClass[k.plan] || 'type-standard'}">${k.plan}</span>
+        </div>
+        <div class="api-item-key">${k.apiKey}</div>
+        <div class="api-item-actions">
+          <button class="btn-small" onclick="copiarExistente('${k.apiKey}')">📋 Copiar</button>
+        </div>
+      </li>`
+    ).join('');
 
-      ultimaKey = key;
-      document.getElementById('keyGenerada').textContent = key;
-      document.getElementById('resultado').classList.add('show');
+    contador.innerHTML = `Total: <span>${keys.length}</span> API keys`;
 
-      const keys = JSON.parse(localStorage.getItem('jhan_api_keys') || '[]');
-      keys.unshift({ usuario, apiKey: key, plan, fecha: new Date().toLocaleDateString('es-ES') });
-      localStorage.setItem('jhan_api_keys', JSON.stringify(keys));
+  } catch (err) {
+    lista.innerHTML = '<div class="empty-state">❌ Error cargando datos</div>';
+    console.error(err);
+  }
+}
 
-      document.getElementById('usuario').value = '';
-      showToast('✅ API Key generada y guardada');
-    }
-
-    function copiarKey() {
-      if (!ultimaKey) return;
-      navigator.clipboard.writeText(ultimaKey).then(() => showToast('📋 Copiada al portapapeles'));
-    }
-
-    function copiarExistente(key) {
-      navigator.clipboard.writeText(key).then(() => showToast('📋 Copiada al portapapeles'));
-    }
-
-    function eliminarKey(index) {
-      const keys = JSON.parse(localStorage.getItem('jhan_api_keys') || '[]');
-      keys.splice(index, 1);
-      localStorage.setItem('jhan_api_keys', JSON.stringify(keys));
-      renderApis();
-      showToast('🗑️ API Key eliminada');
-    }
-
-    function renderApis() {
-      const keys = JSON.parse(localStorage.getItem('jhan_api_keys') || '[]');
-      const lista = document.getElementById('listaApis');
-      const contador = document.getElementById('contador');
-
-      if (keys.length === 0) {
-        lista.innerHTML = '<div class="empty-state"><div class="empty-icon">🔑</div>No tienes API keys generadas aún</div>';
-        contador.innerHTML = '';
-        return;
-      }
-
-      const typeClass = { standard: 'type-standard', pro: 'type-pro', enterprise: 'type-enterprise' };
-      lista.innerHTML = keys.map((k, i) =>
-        '<li class="api-item">' +
-          '<div class="api-item-header">' +
-            '<span class="api-item-user">' + k.usuario + '</span>' +
-            '<span class="api-item-type ' + (typeClass[k.plan] || 'type-standard') + '">' + (k.plan || 'standard') + '</span>' +
-          '</div>' +
-          '<div class="api-item-key">' + k.apiKey + '</div>' +
-          '<div class="api-item-actions">' +
-            '<button class="btn-small" onclick="copiarExistente(\'' + k.apiKey + '\')">📋 Copiar</button>' +
-            '<button class="btn-small btn-delete" onclick="eliminarKey(' + i + ')">🗑️ Eliminar</button>' +
-          '</div>' +
-        '</li>'
-      ).join('');
-
-      contador.innerHTML = 'Total: <span>' + keys.length + '</span> API key' + (keys.length !== 1 ? 's' : '');
-    }
-
-    function showToast(msg) {
-      const t = document.getElementById('toast');
-      t.textContent = msg;
-      t.classList.add('show');
-      setTimeout(() => t.classList.remove('show'), 2500);
-    }
-  </script>
+// 🔔 TOAST
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+</script>
 
 </body>
 </html>
