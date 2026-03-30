@@ -389,13 +389,13 @@
 
   <div class="toast" id="toast"></div>
 
-  <script>
+<script>
 const API_URL = "https://mi-api-clnb.onrender.com";
 
 let ultimaKey = '';
-let usuarioGlobal = '';
+let usuarioGlobal = localStorage.getItem('usuarioGlobal') || '';
 
-// Cambiar entre tabs
+// Cambiar tabs
 function switchTab(tab) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
@@ -421,7 +421,6 @@ async function generarKey() {
   const plan = document.getElementById('plan').value;
 
   try {
-    // 1️⃣ Solicitar key al servidor
     const res = await fetch(`${API_URL}/api/generar-key`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -434,7 +433,9 @@ async function generarKey() {
     ultimaKey = data.apiKey;
     usuarioGlobal = usuario;
 
-    // Mostrar resultado en UI
+    // Guardar usuario para recordar después de recargar
+    localStorage.setItem('usuarioGlobal', usuarioGlobal);
+
     document.getElementById('keyGenerada').textContent = data.apiKey;
     document.getElementById('resultado').classList.add('show');
     document.getElementById('usuario').value = '';
@@ -461,8 +462,10 @@ function copiarExistente(key) {
 // 🔥 Obtener todas las keys del usuario desde DB
 async function renderApis() {
   if (!usuarioGlobal) {
-    showToast('⚠️ Primero genera una API para ver tus keys');
-    return;
+    const usuario = prompt("Escribe tu nombre de usuario para cargar tus keys:");
+    if (!usuario) return;
+    usuarioGlobal = usuario;
+    localStorage.setItem('usuarioGlobal', usuarioGlobal);
   }
 
   const lista = document.getElementById('listaApis');
@@ -511,6 +514,11 @@ function showToast(msg) {
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2500);
 }
+
+// 🔹 Si hay usuario guardado al cargar la página, ir a Mis APIs
+window.addEventListener('DOMContentLoaded', () => {
+  if (usuarioGlobal) switchTab('misapis');
+});
 </script>
 
 </body>
