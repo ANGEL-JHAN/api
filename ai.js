@@ -21,16 +21,25 @@ function procesarTexto(texto) {
   };
 }
 
-// Generar respuesta
 function generarRespuesta(mensaje) {
-  const input = procesarTexto(mensaje);
-  const resultado = net.run(input);
+  try {
+    if (!mensaje) return "Mensaje vacío";
 
-  if (resultado.saludo > 0.5) return "Hola 👋";
-  if (resultado.despedida > 0.5) return "Adiós 👋";
-  if (resultado.amable > 0.5) return "De nada 😊";
+    const input = procesarTexto(mensaje);
+    const resultado = net.run(input);
 
-  return "No entendí 😅";
+    if (!resultado) return "No entendí 😅";
+
+    if (resultado.saludo && resultado.saludo > 0.5) return "Hola 👋";
+    if (resultado.despedida && resultado.despedida > 0.5) return "Adiós 👋";
+    if (resultado.amable && resultado.amable > 0.5) return "De nada 😊";
+
+    return "No entendí 😅";
+
+  } catch (error) {
+    console.log("ERROR IA:", error);
+    return "Error en IA";
+  }
 }
 
 module.exports = { generarRespuesta };
