@@ -1,5 +1,5 @@
 // =========================
-// 🧠 JHAN-IA CONVERSACIONAL
+// 🧠 JHAN-IA – Núcleo de Respuesta
 // =========================
 
 const memoria = {};
@@ -23,43 +23,12 @@ function similar(a, b) {
 }
 
 // =========================
-// ⏰ Saludos según la hora
-// =========================
-function saludoSegunHora() {
-  const h = new Date().getHours();
-  if (h >= 5 && h < 12) return "¡Buenos días! ☀️";
-  if (h >= 12 && h < 18) return "¡Buenas tardes! 🌤️";
-  if (h >= 18 && h < 23) return "¡Buenas noches! 🌙";
-  return "¡Hola! 👋";
-}
-
-// =========================
-// 💬 Respuestas predefinidas
-// =========================
-const respuestasPredefinidas = [
-  { pregunta: "hola", respuesta: saludoSegunHora },
-  { pregunta: "buenos dias", respuesta: saludoSegunHora },
-  { pregunta: "buenas tardes", respuesta: saludoSegunHora },
-  { pregunta: "buenas noches", respuesta: saludoSegunHora },
-  { pregunta: "que tal", respuesta: () => "¡Todo bien! 😎 ¿Y tú?" },
-  { pregunta: "como estas", respuesta: () => "¡Estoy funcionando perfecto! 🤖" },
-  { pregunta: "bien", respuesta: () => "¡Qué bueno! 😄" },
-  { pregunta: "mal", respuesta: () => "Oh, espero que mejores pronto 😢" },
-  { pregunta: "quien te creo", respuesta: "Mi creador es ANGEL OFC 🤖" },
-  { pregunta: "como te llamas", respuesta: "Mi nombre es JHAN-IA 🤖" },
-  { pregunta: "hora", respuesta: () => `La hora actual es ${new Date().toLocaleTimeString()} ⏰` },
-  { pregunta: "adios", respuesta: () => "¡Hasta luego! 👋" },
-  { pregunta: "hasta luego", respuesta: () => "¡Nos vemos pronto! 😊" },
-  { pregunta: "gracias", respuesta: () => "¡De nada! 😎" },
-];
-
-// =========================
 // 🧠 Buscar mejor respuesta
 // =========================
 function buscarMejorRespuesta(mensaje) {
   const limpio = limpiar(mensaje);
 
-  // 1️⃣ Revisar predefinidas
+  // 1️⃣ Revisar respuestas predefinidas
   for (const item of respuestasPredefinidas) {
     if (similar(item.pregunta, limpio)) {
       return typeof item.respuesta === "function" ? item.respuesta() : item.respuesta;
@@ -72,7 +41,6 @@ function buscarMejorRespuesta(mensaje) {
 
   // Ordenar por score
   matches.sort((a, b) => (b.score || 1) - (a.score || 1));
-
   return matches[0].respuesta;
 }
 
@@ -128,11 +96,40 @@ function guardarMemoria(usuario, mensaje, respuesta) {
 }
 
 // =========================
+// 📌 Respuestas Predefinidas – Editables
+// =========================
+const respuestasPredefinidas = [
+  // Ejemplo de saludos
+  { pregunta: "hola", respuesta: () => "¡Hola! 👋" },
+  { pregunta: "buenos dias", respuesta: () => "¡Buenos días! ☀️" },
+  { pregunta: "buenas tardes", respuesta: () => "¡Buenas tardes! 🌤️" },
+  { pregunta: "buenas noches", respuesta: () => "¡Buenas noches! 🌙" },
+
+  // Ejemplo de conversación básica
+  { pregunta: "que tal", respuesta: () => "¡Todo bien! 😎 ¿Y tú?" },
+  { pregunta: "como estas", respuesta: () => "¡Estoy funcionando perfecto! 🤖" },
+  { pregunta: "bien", respuesta: () => "¡Qué bueno! 😄" },
+  { pregunta: "mal", respuesta: () => "Oh, espero que mejores pronto 😢" },
+
+  // Preguntas clave sobre el bot
+  { pregunta: "quien te creo", respuesta: "Mi creador es ANGEL OFC 🤖" },
+  { pregunta: "como te llamas", respuesta: "Mi nombre es JHAN-IA 🤖" },
+
+  // Información dinámica
+  { pregunta: "hora", respuesta: () => `La hora actual es ${new Date().toLocaleTimeString()} ⏰` },
+
+  // Despedidas
+  { pregunta: "adios", respuesta: () => "¡Hasta luego! 👋" },
+  { pregunta: "hasta luego", respuesta: () => "¡Nos vemos pronto! 😊" },
+  { pregunta: "gracias", respuesta: () => "¡De nada! 😎" },
+];
+
+// =========================
 // 📦 Exportar
 // =========================
 module.exports = {
   generarRespuesta,
   guardarMemoria,
   memoriaGlobal,
-  respuestasPredefinidas,
+  respuestasPredefinidas, // Para que puedas agregar más fácilmente
 };
