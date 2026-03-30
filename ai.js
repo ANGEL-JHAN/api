@@ -1,76 +1,36 @@
-const fs = require("fs");
+const brain = require("brain.js");
 
-const DATA_FILE = "memoria.json";
+// Crear red neuronal
+const net = new brain.NeuralNetwork();
 
-// 🔹 Cargar memoria
-function cargarMemoria() {
-  if (!fs.existsSync(DATA_FILE)) return [];
-  return JSON.parse(fs.readFileSync(DATA_FILE));
+// Entrenamiento básico
+net.train([
+  { input: { hola: 1 }, output: { saludo: 1 } },
+  { input: { adios: 1 }, output: { despedida: 1 } },
+  { input: { gracias: 1 }, output: { amable: 1 } }
+]);
+
+// Función para convertir texto a input
+function procesarTexto(texto) {
+  texto = texto.toLowerCase();
+
+  return {
+    hola: texto.includes("hola") ? 1 : 0,
+    adios: texto.includes("adios") ? 1 : 0,
+    gracias: texto.includes("gracias") ? 1 : 0
+  };
 }
 
-// 🔹 Guardar memoria
-function guardarMemoria(usuario, mensaje, respuesta) {
-  const data = cargarMemoria();
-  data.push({ usuario, mensaje, respuesta });
-  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+// Generar respuesta
+function generarRespuesta(mensaje) {
+  const input = procesarTexto(mensaje);
+  const resultado = net.run(input);
+
+  if (resultado.saludo > 0.5) return "Hola 👋";
+  if (resultado.despedida > 0.5) return "Adiós 👋";
+  if (resultado.amable > 0.5) return "De nada 😊";
+
+  return "No entendí 😅";
 }
 
-// 🔹 Buscar respuesta en memoria
-function buscarMemoria(mensaje) {
-  const data = cargarMemoria();
-
-  const encontrado = data.find(item =>
-    item.mensaje.toLowerCase() === mensaje.toLowerCase()
-  );
-
-  return encontrado ? encontrado.respuesta : null;
-}
-
-// 🔹 Buscar en respuestas personalizadas
-function buscarRespuestaPersonalizada(mensaje) {
-  mensaje = mensaje.toLowerCase();
-
-  for (let item of respuestas) {
-    for (let palabra of item.palabras) {
-      if (mensaje.includes(palabra)) {
-        return item.respuesta;
-      }
-    }
-  }
-
-  return null;
-}
-
-// 🔹 Generar respuesta
-function generarRespuesta(mensaje, usuario) {
-
-  // 1️⃣ Buscar en memoria
-  const memoria = buscarMemoria(mensaje);
-  if (memoria) return memoria;
-
-  // 2️⃣ Respuestas personalizadas
-  const personalizada = buscarRespuestaPersonalizada(mensaje);
-  if (personalizada) {
-    guardarMemoria(usuario, mensaje, personalizada);
-    return personalizada;
-  }
-
-  // 3️⃣ Respuesta por defecto inteligente
-  const respuestasDefault = [
-    "Interesante 🤔",
-    "Cuéntame más...",
-    "No entendí bien 😅",
-    "Explícame mejor"
-  ];
-
-  const respuesta = respuestasDefault[Math.floor(Math.random() * respuestasDefault.length)];
-
-  guardarMemoria(usuario, mensaje, respuesta);
-
-  return respuesta;
-}
-
-module.exports = {
-  generarRespuesta,
-  guardarMemoria
-};
+module.exports = { generarRespuesta };
