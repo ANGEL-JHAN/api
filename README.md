@@ -2,23 +2,14 @@
 
 ![JHAN-IA Logo](https://mi-api-clnb.onrender.com/img.jpg)
 
-**JHAN-IA API** te permite integrar un asistente inteligente potenciado con IA en tus proyectos web o backend. Responde a mensajes en español y guarda la interacción en la base de datos.
+**JHAN-IA API** te permite integrar un asistente inteligente en tus proyectos usando tu propia API Key.
 
 ---
 
-## 🔹 Características
+## 🔹 Requisitos e Instalación
 
-- IA contextual que entiende el contexto de la conversación.  
-- Multi-plataforma: funciona en web, móvil y backend.  
-- Guarda conversaciones automáticamente en la base de datos.  
-- Fácil integración mediante API Key.  
+1. Tener **Node.js** (v16+) en tu proyecto.  
+2. Instalar dependencias necesarias si tu proyecto es Node.js:
 
----
-
-## 🔑 Cómo usar tu API Key
-
-Para usar la API, primero necesitas tu **API Key**, que puedes generar con:
-
-```http
-POST https://mi-api-clnb.onrender.com/generate-key
-Body JSON opcional: { "usuario": "tu_nombre" }
+```bash
+npm install express cors node-fetch uuid
