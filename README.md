@@ -1,4 +1,4 @@
-# JHAN-IA API
+### JHAN-IA API
 
 ![JHAN-IA Logo](https://mi-api-clnb.onrender.com/img.jpg)
 
@@ -9,7 +9,7 @@
 ### 🔹 Requisitos e Instalación
 
 1️⃣ Tener **Node.js** (v16+) en tu proyecto.  
-2. Instalar dependencias necesarias si tu proyecto es Node.js:
+2️⃣ Instalar dependencias necesarias si tu proyecto es Node.js:
 
 ```bash
 npm install express cors node-fetch uuid
@@ -17,12 +17,12 @@ npm install express cors node-fetch uuid
 ## 🔑 Configuración de tu API Key
 
 ```bash
-1 Consigue tu API Key desde la API (por ejemplo: (xxxx.xxxx-xxxxxx).
+3️⃣ Consigue tu API Key desde la API (por ejemplo: (xxxx.xxxx-xxxxxx).
 Guarda tu API Key 
 (xxxx.xxxx-xxxxxx)
 ```
 
- el URL de la API en tu proyecto:
+4️⃣ el URL de la API en tu proyecto:
 "https://mi-api-clnb.onrender.com/api/ia" (siempre va a ser ese URL)
  
 Ejemplo 
@@ -35,7 +35,7 @@ const USUARIO = "nombre_usuario";
 
 ##🚀 Uso
 
-Envía solicitudes a la API usando tu API Key:
+5️⃣ Envía solicitudes a la API usando tu API Key:
 Headers:
 
 ```bash
