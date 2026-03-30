@@ -2,43 +2,67 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 const fs = require("fs");
-const fetch = require("node-fetch");
 const { generarRespuesta, guardarMemoria } = require("./ia");
 const { v4: uuidv4 } = require("uuid");
 
-const app = express();
-app.use(express.json());
-app.use(cors());
+// 🔥 FIX fetch (para Render / Node)
+const fetch = (...args) =>
+  import("node-fetch").then(({ default: fetch }) => fetch(...args));
 
-// Servir archivos
+const app = express();
+
+// ✅ CORS PRO
+app.use(cors({
+  origin: "*",
+  methods: ["GET", "POST", "DELETE"],
+  allowedHeaders: ["Content-Type", "x-api-key"]
+}));
+
+app.use(express.json());
 app.use(express.static(path.join(__dirname)));
 
 // =========================
-// 🔑 CONFIG KEYS (DB FAKE)
+// 🔑 CONFIG KEYS (JSON DB)
 // =========================
 const KEYS_FILE = "keys.json";
+
+// Crear archivo si no existe
+if (!fs.existsSync(KEYS_FILE)) {
+  fs.writeFileSync(KEYS_FILE, "[]");
+}
 
 let apiKeys = [
   {
     usuario: "admin",
-    apiKey: "123456",
+    apiKey: process.env.ADMIN_KEY || "123456",
     plan: "admin",
     uso: 0,
     limite: 999999
   }
 ];
 
-// Cargar keys
-if (fs.existsSync(KEYS_FILE)) {
+// Cargar keys con protección
+try {
   const fileKeys = JSON.parse(fs.readFileSync(KEYS_FILE));
-  apiKeys = [...apiKeys, ...fileKeys];
+
+  apiKeys = [
+    ...apiKeys,
+    ...fileKeys.filter(fk => !apiKeys.some(k => k.apiKey === fk.apiKey))
+  ];
+
+} catch (err) {
+  console.error("❌ Error leyendo keys.json");
 }
 
 // Guardar keys
 function guardarKeys() {
   fs.writeFileSync(
     KEYS_FILE,
-    JSON.stringify(apiKeys.filter(k => k.apiKey !== "123456"), null, 2)
+    JSON.stringify(
+      apiKeys.filter(k => k.plan !== "admin"),
+      null,
+      2
+    )
   );
 }
 
@@ -59,6 +83,10 @@ app.post("/api/generar-key", (req, res) => {
     enterprise: 999999
   };
 
+  if (!planes[plan]) {
+    return res.status(400).json({ error: "Plan inválido" });
+  }
+
   const newKey = uuidv4();
 
   const nuevaKey = {
@@ -66,7 +94,7 @@ app.post("/api/generar-key", (req, res) => {
     apiKey: newKey,
     plan,
     uso: 0,
-    limite: planes[plan] || 50
+    limite: planes[plan]
   };
 
   apiKeys.push(nuevaKey);
@@ -104,8 +132,14 @@ app.get("/api/mis-keys/:usuario", (req, res) => {
 app.delete("/api/eliminar-key/:key", (req, res) => {
   const { key } = req.params;
 
+  const antes = apiKeys.length;
+
   apiKeys = apiKeys.filter(k => k.apiKey !== key);
   guardarKeys();
+
+  if (apiKeys.length === antes) {
+    return res.status(404).json({ error: "Key no encontrada" });
+  }
 
   res.json({ success: true });
 });
@@ -121,6 +155,11 @@ app.get("/", (req, res) => {
 // 🔐 VALIDACIÓN
 // =========================
 function validarKey(key, res) {
+  if (!key) {
+    res.status(401).json({ error: "Falta API KEY" });
+    return null;
+  }
+
   const keyData = apiKeys.find(k => k.apiKey === key);
 
   if (!keyData) {
@@ -146,7 +185,9 @@ app.get("/api/ia", async (req, res) => {
   const keyData = validarKey(key, res);
   if (!keyData) return;
 
-  if (!mensaje) return res.json({ error: "Falta mensaje" });
+  if (!mensaje) {
+    return res.status(400).json({ error: "Falta mensaje" });
+  }
 
   try {
     const respuesta = generarRespuesta(mensaje, usuario);
@@ -155,7 +196,7 @@ app.get("/api/ia", async (req, res) => {
     keyData.uso++;
     guardarKeys();
 
-    // Guardar en DB externa
+    // 🔥 Guardar en DB externa
     try {
       await fetch("https://database-2poz.onrender.com/guardar", {
         method: "POST",
@@ -170,7 +211,7 @@ app.get("/api/ia", async (req, res) => {
         })
       });
     } catch (err) {
-      console.error("Error DB:", err.message);
+      console.error("DB externa error:", err.message);
     }
 
     res.json({
@@ -196,7 +237,9 @@ app.post("/api/ia", async (req, res) => {
   const keyData = validarKey(key, res);
   if (!keyData) return;
 
-  if (!mensaje) return res.status(400).json({ error: "Falta mensaje" });
+  if (!mensaje) {
+    return res.status(400).json({ error: "Falta mensaje" });
+  }
 
   try {
     const respuesta = generarRespuesta(mensaje, usuario);
@@ -219,7 +262,7 @@ app.post("/api/ia", async (req, res) => {
         })
       });
     } catch (err) {
-      console.error("Error DB:", err.message);
+      console.error("DB externa error:", err.message);
     }
 
     res.json({
@@ -260,6 +303,7 @@ app.post("/chat", (req, res) => {
 // 🚀 SERVER
 // =========================
 const PORT = process.env.PORT || 3000;
+
 app.listen(PORT, () => {
   console.log(`🔥 JHAN-IA corriendo en puerto ${PORT}`);
 });
