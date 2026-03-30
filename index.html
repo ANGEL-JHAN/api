@@ -389,12 +389,13 @@
 
   <div class="toast" id="toast"></div>
 
-  const API_URL = "https://mi-api-clnb.onrender.com";
+  <script>
+const API_URL = "https://mi-api-clnb.onrender.com";
 
 let ultimaKey = '';
 let usuarioGlobal = '';
 
-// Cambiar de tabs
+// Cambiar entre tabs
 function switchTab(tab) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
@@ -409,7 +410,7 @@ function switchTab(tab) {
   }
 }
 
-// 🔥 GENERAR KEY DESDE TU API Y GUARDAR EN DB
+// 🔥 Generar key y guardar en DB
 async function generarKey() {
   const usuario = document.getElementById('usuario').value.trim();
   if (!usuario) {
@@ -420,7 +421,7 @@ async function generarKey() {
   const plan = document.getElementById('plan').value;
 
   try {
-    // 1️⃣ Generar key desde tu API
+    // 1️⃣ Solicitar key al servidor
     const res = await fetch(`${API_URL}/api/generar-key`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -433,6 +434,7 @@ async function generarKey() {
     ultimaKey = data.apiKey;
     usuarioGlobal = usuario;
 
+    // Mostrar resultado en UI
     document.getElementById('keyGenerada').textContent = data.apiKey;
     document.getElementById('resultado').classList.add('show');
     document.getElementById('usuario').value = '';
@@ -445,16 +447,18 @@ async function generarKey() {
   }
 }
 
-// 📋 COPIAR
+// 📋 Copiar key generada
 function copiarKey() {
   if (!ultimaKey) return;
   navigator.clipboard.writeText(ultimaKey).then(() => showToast('📋 Copiada'));
 }
+
+// 📋 Copiar key existente
 function copiarExistente(key) {
   navigator.clipboard.writeText(key).then(() => showToast('📋 Copiada'));
 }
 
-// 🔥 OBTENER KEYS DESDE DB
+// 🔥 Obtener todas las keys del usuario desde DB
 async function renderApis() {
   if (!usuarioGlobal) {
     showToast('⚠️ Primero genera una API para ver tus keys');
@@ -500,13 +504,14 @@ async function renderApis() {
   }
 }
 
-// 🔔 TOAST
+// 🔔 Mostrar toast
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2500);
 }
+</script>
 
 </body>
 </html>
