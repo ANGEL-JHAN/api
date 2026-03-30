@@ -1,18 +1,18 @@
 // =========================
-// 🧠 JHAN-IA – Núcleo de Respuesta
+// 🧠 MODO DIOS TOTAL - JHAN-IA
 // =========================
 
 const memoria = {};
 const memoriaGlobal = [];
 
-// 🎲 Aleatorio
+// 🎲 Función random
 function random(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-// 🔍 Limpiar texto
-function limpiar(texto) {
-  return texto.toLowerCase().trim();
+// 🔍 Normalizar texto
+function limpiar(t) {
+  return t.toLowerCase().trim();
 }
 
 // 🔥 Comparación simple
@@ -23,113 +23,128 @@ function similar(a, b) {
 }
 
 // =========================
-// 🧠 Buscar mejor respuesta
+// 🧠 BUSCAR MEJOR RESPUESTA GLOBAL
 // =========================
 function buscarMejorRespuesta(mensaje) {
-  const limpio = limpiar(mensaje);
+  const matches = memoriaGlobal.filter(c =>
+    similar(c.mensaje, mensaje)
+  );
 
-  // 1️⃣ Revisar respuestas predefinidas
-  for (const item of respuestasPredefinidas) {
-    if (similar(item.pregunta, limpio)) {
-      return typeof item.respuesta === "function" ? item.respuesta() : item.respuesta;
-    }
-  }
-
-  // 2️⃣ Revisar memoria global
-  const matches = memoriaGlobal.filter(c => similar(c.mensaje, limpio));
   if (matches.length === 0) return null;
 
-  // Ordenar por score
   matches.sort((a, b) => (b.score || 1) - (a.score || 1));
+
   return matches[0].respuesta;
 }
 
 // =========================
-// 🤖 Generar respuesta
+// 🌎 Obtener fecha/hora en Perú
+// =========================
+function horaPeru() {
+  return new Date().toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "America/Lima" });
+}
+
+function fechaPeru() {
+  return new Date().toLocaleDateString("es-PE", { weekday: "long", year: "numeric", month: "long", day: "numeric", timeZone: "America/Lima" });
+}
+
+// =========================
+// 💬 RESPUESTAS PREDEFINIDAS
+// =========================
+const respuestasPredefinidas = [
+  // ---------- Creador ----------
+  { pregunta: ["quien es tu creador","quien te creo","tu creador","quien te diseño","quien te programo","quien te hizo"], 
+    respuesta: "Mi creador es ANGEL OFC 🤖" },
+  { pregunta: ["como se llama tu creador","nombre del creador","cual es el nombre de tu creador"], 
+    respuesta: "El nombre de mi creador es ANGEL OFC 🤖" },
+  { pregunta: ["autor","desarrollador","programador"], 
+    respuesta: "Fui creado por ANGEL OFC, el desarrollador principal 🤖" },
+
+  // ---------- Nombre del bot ----------
+  { pregunta: ["como te llamas","cual es tu nombre","tu nombre","quien eres","como te identificas"], 
+    respuesta: "Mi nombre es JHAN-IA 🤖" },
+  { pregunta: ["nombre del bot","como te llaman","tu nombre es"], 
+    respuesta: "Soy JHAN-IA, tu asistente inteligente 🤖" },
+  { pregunta: ["quien es jhan-ia"], 
+    respuesta: "Yo soy JHAN-IA, creado por ANGEL OFC 🤖" },
+
+  // ---------- Saludos ----------
+  { pregunta: ["hola","buenos dias","buenas tardes","buenas noches","que tal","como estas","qué tal"], 
+    respuesta: () => {
+      const h = new Date().toLocaleTimeString("es-PE", { hour: "2-digit", hour12: false, timeZone: "America/Lima" });
+      const hour = parseInt(h.split(":")[0]);
+      if(hour<12) return "¡Buenos días! 😎 ¿Cómo estás?";
+      if(hour<18) return "¡Buenas tardes! 😎 ¿Cómo estás?";
+      return "¡Buenas noches! 😎 ¿Cómo estás?";
+    }
+  },
+  { pregunta: ["bien","muy bien","todo bien","excelente"], 
+    respuesta: "¡Qué bueno! Me alegra escucharlo 😎" },
+  { pregunta: ["mal","no muy bien","triste","cansado"], 
+    respuesta: "Lo siento 😔 ¿quieres contarme qué pasó?" },
+
+  // ---------- Conversación ----------
+  { pregunta: ["gracias","muchas gracias","thank you"], 
+    respuesta: "¡De nada! 🤖 Siempre estoy aquí para ayudarte" },
+  { pregunta: ["adios","nos vemos","chao"], 
+    respuesta: "Hasta luego 👋 ¡Que tengas un buen día!" },
+  { pregunta: ["hora","que hora es","dime la hora"], 
+    respuesta: () => `La hora actual en Perú es ${horaPeru()} ⏰` },
+  { pregunta: ["que dia es hoy","fecha","hoy es"], 
+    respuesta: () => `Hoy en Perú es ${fechaPeru()} 📅` },
+];
+
+// =========================
+// 🤖 GENERAR RESPUESTA
 // =========================
 function generarRespuesta(mensaje, usuario = "anonimo") {
   mensaje = limpiar(mensaje);
-  if (!memoria[usuario]) memoria[usuario] = [];
 
-  // 1️⃣ Buscar predefinidas o memoria global
+  if(!memoria[usuario]) memoria[usuario] = [];
+
+  // 1️⃣ Buscar en memoria global
   const global = buscarMejorRespuesta(mensaje);
-  if (global) return global;
+  if(global) return global + " 🤖";
 
-  // 2️⃣ Contexto usuario (respuestas aleatorias para conversación)
+  // 2️⃣ Buscar en respuestas predefinidas
+  for(const item of respuestasPredefinidas){
+    if(item.pregunta.some(p => similar(p, mensaje))){
+      return typeof item.respuesta === "function" ? item.respuesta() : item.respuesta;
+    }
+  }
+
+  // 3️⃣ Contexto usuario
   const historial = memoria[usuario];
-  if (historial.length > 0) {
+  if(historial.length>0){
     return random([
       "Cuéntame más 🤔",
       "Interesante 😎",
-      "Sigue hablando 🔥",
-      "Ah, entiendo... 🤖",
-      "¡Wow! 🔥",
+      "Sigue hablando 🔥"
     ]);
   }
 
-  // 3️⃣ Respuesta base por defecto
+  // 4️⃣ Respuesta base
   return random([
     "Hmm 🤖",
     "Explícate mejor 😎",
-    "No entendí bien 🤔",
+    "No entendí bien 🤔"
   ]);
 }
 
 // =========================
-// 💾 Guardar memoria
+// 💾 GUARDAR MEMORIA
 // =========================
-function guardarMemoria(usuario, mensaje, respuesta) {
-  const data = { mensaje, respuesta, score: 1 };
+function guardarMemoria(usuario,mensaje,respuesta){
+  const data = { mensaje, respuesta, score:1 };
 
-  // Usuario
-  if (!memoria[usuario]) memoria[usuario] = [];
+  if(!memoria[usuario]) memoria[usuario] = [];
   memoria[usuario].push(data);
-  if (memoria[usuario].length > 50) memoria[usuario].shift();
+  if(memoria[usuario].length>20) memoria[usuario].shift();
 
-  // Memoria global
-  const existente = memoriaGlobal.find(c => c.mensaje === mensaje && c.respuesta === respuesta);
-  if (existente) existente.score++;
-  else memoriaGlobal.push(data);
-
-  // Limitar memoria global
-  if (memoriaGlobal.length > 2000) memoriaGlobal.shift();
+  const existente = memoriaGlobal.find(c=>c.mensaje===mensaje && c.respuesta===respuesta);
+  if(existente){ existente.score++; } 
+  else { memoriaGlobal.push(data); }
+  if(memoriaGlobal.length>2000) memoriaGlobal.shift();
 }
 
-// =========================
-// 📌 Respuestas Predefinidas – Editables
-// =========================
-const respuestasPredefinidas = [
-  // Ejemplo de saludos
-  { pregunta: "hola", respuesta: () => "¡Hola! 👋" },
-  { pregunta: "buenos dias", respuesta: () => "¡Buenos días! ☀️" },
-  { pregunta: "buenas tardes", respuesta: () => "¡Buenas tardes! 🌤️" },
-  { pregunta: "buenas noches", respuesta: () => "¡Buenas noches! 🌙" },
-
-  // Ejemplo de conversación básica
-  { pregunta: "que tal", respuesta: () => "¡Todo bien! 😎 ¿Y tú?" },
-  { pregunta: "como estas", respuesta: () => "¡Estoy funcionando perfecto! 🤖" },
-  { pregunta: "bien", respuesta: () => "¡Qué bueno! 😄" },
-  { pregunta: "mal", respuesta: () => "Oh, espero que mejores pronto 😢" },
-
-  // Preguntas clave sobre el bot
-  { pregunta: "quien te creo", respuesta: "Mi creador es ANGEL OFC 🤖" },
-  { pregunta: "como te llamas", respuesta: "Mi nombre es JHAN-IA 🤖" },
-
-  // Información dinámica
-  { pregunta: "hora", respuesta: () => `La hora actual es ${new Date().toLocaleTimeString()} ⏰` },
-
-  // Despedidas
-  { pregunta: "adios", respuesta: () => "¡Hasta luego! 👋" },
-  { pregunta: "hasta luego", respuesta: () => "¡Nos vemos pronto! 😊" },
-  { pregunta: "gracias", respuesta: () => "¡De nada! 😎" },
-];
-
-// =========================
-// 📦 Exportar
-// =========================
-module.exports = {
-  generarRespuesta,
-  guardarMemoria,
-  memoriaGlobal,
-  respuestasPredefinidas, // Para que puedas agregar más fácilmente
-};
+module.exports = { generarRespuesta, guardarMemoria, memoriaGlobal };
