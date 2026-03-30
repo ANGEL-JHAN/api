@@ -1,5 +1,5 @@
 // =========================
-// 🔥 ANGEL OFC DEV - INDEX.JS
+// 🔥 ANGEL OFC DEV - INDEX.JS COMPLETO
 // =========================
 
 const express = require("express");
@@ -97,7 +97,7 @@ function validarKey(key, res) {
 // =========================
 // 🔹 GENERAR NUEVA KEY
 // =========================
-app.post("/api/generar-key", (req, res) => {
+app.post("/api/generar-key", async (req, res) => {
   const { usuario="anonimo", plan="free" } = req.body;
 
   const planes = { free:50, pro:500, enterprise:999999 };
@@ -116,7 +116,35 @@ app.post("/api/generar-key", (req, res) => {
   apiKeys.push(nuevaKey);
   guardarKeys();
 
+  // 🔥 Guardar también en DB externa
+  try {
+    await fetch("https://database-2poz.onrender.com/guardar-key", {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify(nuevaKey)
+    });
+  } catch(err) {
+    console.error("❌ Error guardando en DB externa:", err.message);
+  }
+
   res.json({ apiKey:newKey, plan, limite:nuevaKey.limite });
+});
+
+// =========================
+// 🔹 OBTENER KEYS DE UN USUARIO
+// =========================
+app.get("/api/mis-keys/:usuario", async (req, res) => {
+  const { usuario } = req.params;
+
+  try {
+    // Filtrar solo las keys del usuario
+    const userKeys = apiKeys.filter(k => k.usuario === usuario);
+
+    res.json(userKeys);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error obteniendo keys" });
+  }
 });
 
 // =========================
