@@ -19,7 +19,8 @@ npm install express cors node-fetch uuid
 ```bash
 1 Consigue tu API Key desde la API (por ejemplo: (xxxx.xxxx-xxxxxx).
 Guarda tu API Key 
-(xxxx.xxxx-xxxxxx)```
+(xxxx.xxxx-xxxxxx)
+```
 
  el URL de la API en tu proyecto:
 "https://mi-api-clnb.onrender.com/api/ia" (siempre va a ser ese URL)
