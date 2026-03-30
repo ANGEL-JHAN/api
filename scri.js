@@ -1,89 +1,125 @@
-// Variables globales
-let usuarioGlobal = '';
+// ============================
+// 🎆 Partículas
+// ============================
+(function(){
+    const c = document.getElementById('particles');
+    for(let i=0;i<40;i++){
+        const p=document.createElement('div');
+        p.className='particle';
+        const s=Math.random()*4+2;
+        p.style.width=s+'px';
+        p.style.height=s+'px';
+        p.style.left=Math.random()*100+'%';
+        p.style.animationDuration=Math.random()*15+10+'s';
+        p.style.animationDelay=Math.random()*10+'s';
+        if(Math.random()>0.5) p.style.background='#b040ff';
+        c.appendChild(p);
+    }
+})();
 
-// Mostrar login o signup
-function showLogin(event){
-  if(event) event.preventDefault();
-  document.getElementById('loginCard').classList.remove('hidden');
-  document.getElementById('signupCard').classList.add('hidden');
+// ============================
+// 🔹 Toggle Login/Signup Cards
+// ============================
+function showSignup(e){
+    if(e) e.preventDefault();
+    document.getElementById('loginCard').classList.add('hidden');
+    document.getElementById('signupCard').classList.remove('hidden');
+}
+function showLogin(e){
+    if(e) e.preventDefault();
+    document.getElementById('signupCard').classList.add('hidden');
+    document.getElementById('loginCard').classList.remove('hidden');
 }
 
-function showSignup(event){
-  if(event) event.preventDefault();
-  document.getElementById('signupCard').classList.remove('hidden');
-  document.getElementById('loginCard').classList.add('hidden');
+// ============================
+// 🔹 Toggle Password Visibility
+// ============================
+function togglePassword(id,btn){
+    const inp = document.getElementById(id);
+    inp.type = inp.type==='password' ? 'text' : 'password';
+    btn.style.color = inp.type==='text' ? '#00e5ff' : '';
 }
 
-// Toggle password
-function togglePassword(id, btn){
-  const input = document.getElementById(id);
-  input.type = input.type === "password" ? "text" : "password";
-  btn.textContent = input.type === "password" ? "👁️" : "🙈";
+// ============================
+// 🔹 Toast Notification
+// ============================
+function showToast(msg,type){
+    const t=document.getElementById('toast');
+    t.textContent=msg;
+    t.className='toast '+(type||'')+' show';
+    setTimeout(()=>t.classList.remove('show'),3000);
 }
 
-// TOAST
-function showToast(msg){
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(()=> t.classList.remove('show'),2500);
-}
+// ============================
+// 🌐 API URL - Database
+// ============================
+const API_URL = "https://mi-api-clnb.onrender.com";
 
-// ======================
-// 🔹 LOGIN
-// ======================
-document.getElementById('loginForm').addEventListener('submit', async (e)=>{
-  e.preventDefault();
-  const usuario = document.getElementById('loginEmail').value.trim();
-  const password = document.getElementById('loginPassword').value.trim();
-  if(!usuario || !password){ showToast("⚠️ Completa todos los campos"); return; }
+// ============================
+// 🔹 Signup Form
+// ============================
+document.getElementById('signupForm').addEventListener('submit', async function(e){
+    e.preventDefault();
+    const nombre = document.getElementById('signupName').value.trim();
+    const usuario = document.getElementById('signupUser').value.trim();
+    const email = document.getElementById('signupEmail').value.trim();
+    const pass = document.getElementById('signupPassword').value;
 
-  try{
-    const res = await fetch("https://mi-api-clnb.onrender.com/api/login", {
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify({ usuario, password })
-    });
-    const data = await res.json();
-    if(data.error){ showToast("❌ "+data.error); return; }
+    if(!nombre||!usuario||!email||!pass) return showToast('Completa todos los campos','error');
+    if(pass.length<8) return showToast('Mínimo 8 caracteres','error');
 
-    usuarioGlobal = data.usuario;
-    showToast("✅ Bienvenido "+usuarioGlobal);
-    // Redirigir a página de API keys
-    window.location.href = "index.html"; // tu página de generación de keys
-  }catch(err){
-    console.error(err);
-    showToast("❌ Error de conexión");
-  }
+    try {
+        const res = await fetch(`${API_URL}/api/register`, {
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body: JSON.stringify({ nombre, usuario, email, password:pass })
+        });
+        const data = await res.json();
+        if(res.ok && data.success){
+            showToast('¡Cuenta creada! ✅','success');
+            setTimeout(()=>window.location.href='index.html',1500); // Redirige directo
+        } else {
+            showToast(data.error||'Error al registrarse','error');
+        }
+    } catch(err){
+        console.error(err);
+        showToast('Error de conexión con la API','error');
+    }
 });
 
-// ======================
-// 🔹 REGISTER
-// ======================
-document.getElementById('signupForm').addEventListener('submit', async (e)=>{
-  e.preventDefault();
-  const nombre = document.getElementById('signupName').value.trim();
-  const usuario = document.getElementById('signupUser').value.trim();
-  const email = document.getElementById('signupEmail').value.trim();
-  const password = document.getElementById('signupPassword').value.trim();
+// ============================
+// 🔹 Login Form
+// ============================
+document.getElementById('loginForm').addEventListener('submit', async function(e){
+    e.preventDefault();
+    const usuario = document.getElementById('loginEmail').value.trim();
+    const pass = document.getElementById('loginPassword').value;
 
-  if(!nombre || !usuario || !email || !password){ showToast("⚠️ Completa todos los campos"); return; }
+    if(!usuario||!pass) return showToast('Completa todos los campos','error');
 
-  try{
-    const res = await fetch("https://mi-api-clnb.onrender.com/api/register", {
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify({ nombre, usuario, email, password })
-    });
-    const data = await res.json();
-    if(data.error){ showToast("❌ "+data.error); return; }
+    try {
+        const res = await fetch(`${API_URL}/api/login`, {
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body: JSON.stringify({ usuario, password:pass })
+        });
+        const data = await res.json();
+        if(res.ok && data.success){
+            showToast('¡Inicio de sesión exitoso! ✅','success');
+            setTimeout(()=>window.location.href='index.html',1000); // Redirige a API keys
+        } else {
+            showToast(data.error||'Usuario o contraseña incorrectos','error');
+        }
+    } catch(err){
+        console.error(err);
+        showToast('Error de conexión con la API','error');
+    }
+});
 
-    usuarioGlobal = usuario;
-    showToast("✅ Registro exitoso");
-    // Redirigir a página de API keys
-    window.location.href = "index.html";
-  }catch(err){
-    console.error(err);
-    showToast("❌ Error de conexión");
-  }
+// ============================
+// 🔹 Inicializar Página
+// ============================
+document.addEventListener('DOMContentLoaded',()=>{
+    // Siempre mostrar login al cargar
+    showLogin();
 });
