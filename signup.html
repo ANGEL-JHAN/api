@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login & Signup | ANGEL OFC</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styl.css">
+</head>
+<body>
+  <div class="particles" id="particles"></div>
+  <div class="auth-container" id="authContainer">
+
+    <!-- LOGIN CARD -->
+    <div class="auth-card" id="loginCard">
+      <div class="logo-section">
+        <div class="logo-icon">
+  <img src="img.jpg" alt="Logo" style="width:100%; height:100%; object-fit:contain; border-radius:20px;">
+</div>
+        <h1>ANGEL OFC</h1>
+        <p class="subtitle">Bienvenido de vuelta</p>
+      </div>
+      <form id="loginForm" class="auth-form">
+        <div class="input-group">
+          <label for="loginEmail">Email o Usuario</label>
+          <div class="input-wrapper">
+            <input type="text" id="loginEmail" placeholder="tu@email.com" required>
+          </div>
+        </div>
+        <div class="input-group">
+          <label for="loginPassword">Contraseña</label>
+          <div class="input-wrapper">
+            <input type="password" id="loginPassword" placeholder="••••••••" required>
+            <button type="button" class="toggle-pass" onclick="togglePassword('loginPassword', this)">👁️</button>
+          </div>
+        </div>
+        <button type="submit" class="btn-primary">Iniciar Sesión</button>
+      </form>
+      <p class="switch-text">¿No tienes cuenta? <a href="#" onclick="showSignup(event)">Regístrate</a></p>
+    </div>
+
+    <!-- SIGNUP CARD -->
+    <div class="auth-card hidden" id="signupCard">
+      <div class="logo-section">
+        <div class="logo-icon">
+  <img src="omg.jpg" alt="Logo" style="width:100%; height:100%; object-fit:contain; border-radius:20px;">
+</div>
+        <h1>ANGEL OFC</h1>
+        <p class="subtitle">Crea tu cuenta</p>
+      </div>
+      <form id="signupForm" class="auth-form">
+        <div class="input-group">
+          <label for="signupName">Nombre completo</label>
+          <div class="input-wrapper">
+            <input type="text" id="signupName" placeholder="Tu nombre" required>
+          </div>
+        </div>
+        <div class="input-group">
+          <label for="signupUser">Usuario</label>
+          <div class="input-wrapper">
+            <input type="text" id="signupUser" placeholder="@usuario" required>
+          </div>
+        </div>
+        <div class="input-group">
+          <label for="signupEmail">Email</label>
+          <div class="input-wrapper">
+            <input type="email" id="signupEmail" placeholder="tu@email.com" required>
+          </div>
+        </div>
+        <div class="input-group">
+          <label for="signupPassword">Contraseña</label>
+          <div class="input-wrapper">
+            <input type="password" id="signupPassword" placeholder="Mínimo 8 caracteres" required minlength="8">
+            <button type="button" class="toggle-pass" onclick="togglePassword('signupPassword', this)">👁️</button>
+          </div>
+        </div>
+        <button type="submit" class="btn-primary">Crear Cuenta</button>
+      </form>
+      <p class="switch-text">¿Ya tienes cuenta? <a href="#" onclick="showLogin(event)">Inicia Sesión</a></p>
+    </div>
+
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="scri.js"></script>
+</body>
+</html>
