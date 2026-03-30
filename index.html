@@ -3,117 +3,482 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Generador de API Key</title>
+  <title>JHAN-IA API Key Generator</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
     body {
-      font-family: Arial, sans-serif;
-      background: #0a0f1a;
-      color: #fff;
+      font-family: 'Inter', sans-serif;
+      background: #060a12;
+      color: #e0e6f0;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Animated background */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -50%; left: -50%;
+      width: 200%; height: 200%;
+      background: radial-gradient(circle at 30% 40%, rgba(0,200,220,0.06) 0%, transparent 50%),
+                  radial-gradient(circle at 70% 60%, rgba(130,80,255,0.05) 0%, transparent 50%);
+      animation: bgShift 15s ease-in-out infinite alternate;
+      z-index: 0;
+    }
+    @keyframes bgShift {
+      0% { transform: translate(0,0); }
+      100% { transform: translate(30px, -20px); }
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 24px 16px;
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      padding: 20px;
     }
-    h1 {
-      color: #ff3b3b;
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .logo {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.6rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #00d4e6, #8250ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 4px;
+    }
+    .subtitle {
+      font-size: 0.82rem;
+      color: #5a6580;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      background: rgba(15,20,35,0.8);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px;
+      padding: 4px;
+      margin-bottom: 24px;
+    }
+    .tab {
+      flex: 1;
+      padding: 10px;
+      text-align: center;
+      font-size: 0.85rem;
+      font-weight: 500;
+      border-radius: 9px;
+      border: none;
+      background: transparent;
+      color: #5a6580;
+      cursor: pointer;
+      transition: all 0.25s;
+      font-family: 'Inter', sans-serif;
+    }
+    .tab.active {
+      background: linear-gradient(135deg, rgba(0,212,230,0.15), rgba(130,80,255,0.15));
+      color: #00d4e6;
+      box-shadow: 0 0 20px rgba(0,212,230,0.1);
+    }
+    .tab:hover:not(.active) { color: #8a95b0; }
+
+    /* Panels */
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    /* Card */
+    .card {
+      background: rgba(12,16,28,0.85);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 16px;
+      padding: 24px;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+    }
+    .card + .card { margin-top: 16px; }
+
+    .card-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: #cdd5e4;
+    }
+
+    /* Input */
+    .input-group { margin-bottom: 16px; }
+    .input-group label {
+      display: block;
+      font-size: 0.78rem;
+      color: #5a6580;
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+    .input-field {
+      width: 100%;
+      padding: 12px 14px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      color: #e0e6f0;
+      font-size: 0.9rem;
+      font-family: 'Inter', sans-serif;
+      outline: none;
+      transition: border 0.2s, box-shadow 0.2s;
+    }
+    .input-field:focus {
+      border-color: rgba(0,212,230,0.4);
+      box-shadow: 0 0 0 3px rgba(0,212,230,0.08);
+    }
+    .input-field::placeholder { color: #3a4560; }
+
+    /* Select */
+    .select-field {
+      width: 100%;
+      padding: 12px 14px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      color: #e0e6f0;
+      font-size: 0.9rem;
+      font-family: 'Inter', sans-serif;
+      outline: none;
+      appearance: none;
+      cursor: pointer;
+      transition: border 0.2s;
+    }
+    .select-field:focus { border-color: rgba(0,212,230,0.4); }
+    .select-field option { background: #0c101c; }
+
+    /* Button */
+    .btn-primary {
+      width: 100%;
+      padding: 13px;
+      background: linear-gradient(135deg, #00c8dc, #7c4dff);
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      font-size: 0.9rem;
+      font-weight: 600;
+      font-family: 'Space Grotesk', sans-serif;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.3s;
+      box-shadow: 0 4px 25px rgba(0,200,220,0.25);
+      margin-top: 8px;
+    }
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 30px rgba(0,200,220,0.35);
+    }
+    .btn-primary:active { transform: translateY(0); }
+
+    /* Result */
+    .result {
+      margin-top: 20px;
+      padding: 16px;
+      background: rgba(0,212,230,0.04);
+      border: 1px solid rgba(0,212,230,0.12);
+      border-radius: 12px;
+      display: none;
+      animation: fadeIn 0.3s;
+    }
+    .result.show { display: block; }
+    .result-label {
+      font-size: 0.72rem;
+      color: #00d4e6;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .result-key {
+      font-family: 'Space Grotesk', monospace;
+      font-size: 0.85rem;
+      color: #b0f0f8;
+      word-break: break-all;
+      line-height: 1.5;
       margin-bottom: 10px;
     }
-    input, button {
-      padding: 10px;
-      margin: 10px 0;
-      border-radius: 5px;
-      border: none;
-      font-size: 1rem;
-    }
-    input {
-      width: 250px;
-    }
-    button {
-      background: #ff3b3b;
-      color: #fff;
+    .btn-copy {
+      padding: 8px 16px;
+      background: rgba(0,212,230,0.1);
+      border: 1px solid rgba(0,212,230,0.2);
+      border-radius: 8px;
+      color: #00d4e6;
+      font-size: 0.78rem;
+      font-weight: 500;
       cursor: pointer;
-      transition: 0.2s;
+      font-family: 'Inter', sans-serif;
+      transition: background 0.2s;
     }
-    button:hover {
-      background: #e03232;
+    .btn-copy:hover { background: rgba(0,212,230,0.18); }
+
+    /* API list */
+    .api-list { list-style: none; }
+    .api-item {
+      padding: 14px;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 10px;
+      margin-bottom: 8px;
+      transition: border 0.2s;
     }
-    #apiKey {
-      margin-top: 20px;
-      padding: 10px;
-      background: #1a1f2a;
-      border-radius: 5px;
+    .api-item:hover { border-color: rgba(0,212,230,0.15); }
+    .api-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .api-item-user {
+      font-weight: 600;
+      font-size: 0.88rem;
+      color: #cdd5e4;
+    }
+    .api-item-type {
+      font-size: 0.68rem;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-weight: 500;
+    }
+    .type-standard { background: rgba(0,212,230,0.1); color: #00d4e6; }
+    .type-pro { background: rgba(130,80,255,0.12); color: #a78bfa; }
+    .type-enterprise { background: rgba(255,180,0,0.1); color: #fbbf24; }
+    .api-item-key {
+      font-family: 'Space Grotesk', monospace;
+      font-size: 0.76rem;
+      color: #5a6580;
       word-break: break-all;
+      margin-bottom: 8px;
     }
-    #historial {
-      margin-top: 20px;
-      width: 300px;
-      background: #1a1f2a;
-      border-radius: 5px;
-      padding: 10px;
-      max-height: 200px;
-      overflow-y: auto;
+    .api-item-actions {
+      display: flex;
+      gap: 6px;
     }
-    #historial li {
-      margin-bottom: 5px;
-      word-break: break-all;
+    .btn-small {
+      padding: 5px 10px;
+      font-size: 0.72rem;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.03);
+      color: #8a95b0;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      transition: all 0.2s;
     }
+    .btn-small:hover { background: rgba(255,255,255,0.06); color: #cdd5e4; }
+    .btn-delete { border-color: rgba(255,80,80,0.15); color: #ff6b6b; }
+    .btn-delete:hover { background: rgba(255,80,80,0.1); }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #3a4560;
+      font-size: 0.88rem;
+    }
+    .empty-icon {
+      font-size: 2.2rem;
+      margin-bottom: 12px;
+      opacity: 0.5;
+    }
+
+    .counter {
+      font-size: 0.75rem;
+      color: #5a6580;
+      text-align: center;
+      margin-top: 16px;
+    }
+    .counter span { color: #00d4e6; font-weight: 600; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: rgba(0,212,230,0.15);
+      border: 1px solid rgba(0,212,230,0.25);
+      backdrop-filter: blur(16px);
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-size: 0.82rem;
+      color: #00d4e6;
+      transition: transform 0.3s;
+      z-index: 99;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    .footer {
+      text-align: center;
+      margin-top: auto;
+      padding-top: 32px;
+      padding-bottom: 12px;
+      font-size: 0.72rem;
+      color: #2a3450;
+    }
+    .footer a { color: #5a6580; text-decoration: none; }
   </style>
 </head>
 <body>
 
-  <h1>Generador de API Key - JHAN-IA</h1>
-  <input type="text" id="usuario" placeholder="Tu nombre o usuario">
-  <button id="generarBtn">Generar API Key</button>
+  <div class="container">
+    <div class="header">
+      <div class="logo">⚡ JHAN-IA API</div>
+      <div class="subtitle">Generador de API Keys por ANGEL OFC</div>
+    </div>
 
-  <div id="apiKey"></div>
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('generar')">Generar</button>
+      <button class="tab" onclick="switchTab('misapis')">Mis APIs</button>
+    </div>
 
-  <h2>Historial de API Keys</h2>
-  <ul id="historial"></ul>
+    <!-- Panel Generar -->
+    <div id="panel-generar" class="panel active">
+      <div class="card">
+        <div class="card-title">Nueva API Key</div>
+        <div class="input-group">
+          <label>Nombre de usuario</label>
+          <input type="text" class="input-field" id="usuario" placeholder="Ej: angel_dev">
+        </div>
+        <div class="input-group">
+          <label>Tipo de plan</label>
+          <select class="select-field" id="plan">
+            <option value="standard">Standard</option>
+            <option value="pro">Pro</option>
+            <option value="enterprise">Enterprise</option>
+          </select>
+        </div>
+        <button class="btn-primary" onclick="generarKey()">Generar API Key</button>
+
+        <div class="result" id="resultado">
+          <div class="result-label">Tu nueva API Key</div>
+          <div class="result-key" id="keyGenerada"></div>
+          <button class="btn-copy" onclick="copiarKey()">📋 Copiar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel Mis APIs -->
+    <div id="panel-misapis" class="panel">
+      <div class="card">
+        <div class="card-title">Mis API Keys</div>
+        <ul class="api-list" id="listaApis"></ul>
+      </div>
+      <div class="counter" id="contador"></div>
+    </div>
+
+    <div class="footer">Creado por <a href="#">ANGEL OFC</a> — JHAN-IA © 2026</div>
+  </div>
+
+  <div class="toast" id="toast"></div>
 
   <script>
-    const btn = document.getElementById('generarBtn');
-    const input = document.getElementById('usuario');
-    const display = document.getElementById('apiKey');
-    const historial = document.getElementById('historial');
+    let ultimaKey = '';
 
-    // 🔹 Cambia esta URL por la de tu API en Render
-    const API_URL = "https://mi-api-clnb.onrender.com/generate-key";
+    function switchTab(tab) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      if (tab === 'generar') {
+        document.querySelectorAll('.tab')[0].classList.add('active');
+        document.getElementById('panel-generar').classList.add('active');
+      } else {
+        document.querySelectorAll('.tab')[1].classList.add('active');
+        document.getElementById('panel-misapis').classList.add('active');
+        renderApis();
+      }
+    }
 
-    btn.addEventListener('click', async () => {
-      const usuario = input.value.trim();
-      
-      if (!usuario) {
-        alert("Por favor escribe un nombre de usuario");
+    function generarKey() {
+      const usuario = document.getElementById('usuario').value.trim();
+      if (!usuario) { showToast('⚠️ Escribe un nombre de usuario'); return; }
+
+      const plan = document.getElementById('plan').value;
+      const prefijos = { standard: 'jhan_std_', pro: 'jhan_pro_', enterprise: 'jhan_ent_' };
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+      let key = prefijos[plan];
+      for (let i = 0; i < 36; i++) key += chars.charAt(Math.floor(Math.random() * chars.length));
+
+      ultimaKey = key;
+      document.getElementById('keyGenerada').textContent = key;
+      document.getElementById('resultado').classList.add('show');
+
+      const keys = JSON.parse(localStorage.getItem('jhan_api_keys') || '[]');
+      keys.unshift({ usuario, apiKey: key, plan, fecha: new Date().toLocaleDateString('es-ES') });
+      localStorage.setItem('jhan_api_keys', JSON.stringify(keys));
+
+      document.getElementById('usuario').value = '';
+      showToast('✅ API Key generada y guardada');
+    }
+
+    function copiarKey() {
+      if (!ultimaKey) return;
+      navigator.clipboard.writeText(ultimaKey).then(() => showToast('📋 Copiada al portapapeles'));
+    }
+
+    function copiarExistente(key) {
+      navigator.clipboard.writeText(key).then(() => showToast('📋 Copiada al portapapeles'));
+    }
+
+    function eliminarKey(index) {
+      const keys = JSON.parse(localStorage.getItem('jhan_api_keys') || '[]');
+      keys.splice(index, 1);
+      localStorage.setItem('jhan_api_keys', JSON.stringify(keys));
+      renderApis();
+      showToast('🗑️ API Key eliminada');
+    }
+
+    function renderApis() {
+      const keys = JSON.parse(localStorage.getItem('jhan_api_keys') || '[]');
+      const lista = document.getElementById('listaApis');
+      const contador = document.getElementById('contador');
+
+      if (keys.length === 0) {
+        lista.innerHTML = '<div class="empty-state"><div class="empty-icon">🔑</div>No tienes API keys generadas aún</div>';
+        contador.innerHTML = '';
         return;
       }
 
-      try {
-        const res = await fetch(API_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ usuario })
-        });
+      const typeClass = { standard: 'type-standard', pro: 'type-pro', enterprise: 'type-enterprise' };
+      lista.innerHTML = keys.map((k, i) =>
+        '<li class="api-item">' +
+          '<div class="api-item-header">' +
+            '<span class="api-item-user">' + k.usuario + '</span>' +
+            '<span class="api-item-type ' + (typeClass[k.plan] || 'type-standard') + '">' + (k.plan || 'standard') + '</span>' +
+          '</div>' +
+          '<div class="api-item-key">' + k.apiKey + '</div>' +
+          '<div class="api-item-actions">' +
+            '<button class="btn-small" onclick="copiarExistente(\'' + k.apiKey + '\')">📋 Copiar</button>' +
+            '<button class="btn-small btn-delete" onclick="eliminarKey(' + i + ')">🗑️ Eliminar</button>' +
+          '</div>' +
+        '</li>'
+      ).join('');
 
-        const data = await res.json();
+      contador.innerHTML = 'Total: <span>' + keys.length + '</span> API key' + (keys.length !== 1 ? 's' : '');
+    }
 
-        if (data.apiKey) {
-          display.innerHTML = `<strong>Usuario:</strong> ${data.usuario} <br> <strong>API Key:</strong> ${data.apiKey}`;
-
-          // 🔹 Agregar al historial
-          const li = document.createElement('li');
-          li.textContent = `${data.usuario}: ${data.apiKey}`;
-          historial.appendChild(li);
-        } else {
-          display.textContent = 'Error al generar API Key';
-        }
-
-      } catch (err) {
-        display.textContent = 'Error de conexión al servidor';
-        console.error(err);
-      }
-    });
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2500);
+    }
   </script>
 
 </body>
