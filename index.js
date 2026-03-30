@@ -29,18 +29,36 @@ function obtenerApiKey(req) {
 // =========================
 // 🔹 Generador de API Key
 // =========================
-app.post("/generate-key", (req, res) => {
-  const { usuario = "anonimo" } = req.body;
+app.post("/api/generar-key", (req, res) => {
+  const { usuario = "anonimo", plan = "free" } = req.body;
+
+  const planes = {
+    free: 50,
+    pro: 500,
+    enterprise: 999999
+  };
+
   const newKey = uuidv4();
 
-  apiKeys.push({ usuario, apiKey: newKey });
-  fs.writeFileSync(KEYS_FILE, JSON.stringify(apiKeys.filter(k => k.apiKey !== "123456"), null, 2)); 
-  // 🔹 No sobreescribimos la key "123456"
-
-  res.json({
+  const nuevaKeyObj = {
     usuario,
     apiKey: newKey,
-    mensaje: "Tu API Key fue generada correctamente"
+    plan,
+    uso: 0,
+    limite: planes[plan] || 50
+  };
+
+  apiKeys.push(nuevaKeyObj);
+
+  fs.writeFileSync(
+    KEYS_FILE,
+    JSON.stringify(apiKeys.filter(k => k.apiKey !== "123456"), null, 2)
+  );
+
+  res.json({
+    apiKey: newKey,
+    plan,
+    limite: nuevaKeyObj.limite
   });
 });
 
