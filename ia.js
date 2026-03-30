@@ -1,36 +1,53 @@
 // =========================
-// 🧠 MODO DIOS TOTAL
+// 🧠 IA CUSTOMIZABLE - ia.js
 // =========================
 
+// Memoria por usuario
 const memoria = {};
+// Memoria global (para aprender de todas las conversaciones)
 const memoriaGlobal = [];
 
-// 🎲 random
+// 🎲 Función para elegir al azar
 function random(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-// 🔍 limpiar
-function limpiar(t) {
-  return t.toLowerCase().trim();
+// 🔍 Limpiar texto (minúsculas + trim)
+function limpiar(texto) {
+  return texto.toLowerCase().trim();
 }
 
-// 🔥 SIMILITUD SIMPLE
+// 🔥 Comparación simple de similitud
 function similar(a, b) {
   a = limpiar(a);
   b = limpiar(b);
-
   return a.includes(b) || b.includes(a);
 }
 
 // =========================
-// 🧠 BUSCAR MEJOR RESPUESTA
+// 📝 PREGUNTAS PREDEFINIDAS
+// Puedes agregar más aquí fácilmente
+// =========================
+const respuestasPredefinidas = [
+  { pregunta: "quien te creo", respuesta: "Mi creador es ANGEL OFC 🤖" },
+  { pregunta: "como te llamas", respuesta: "Mi nombre es JHAN-IA 🤖" },
+  { pregunta: "hola", respuesta: "¡Hola! ¿Cómo estás? 🤖" },
+  { pregunta: "adios", respuesta: "¡Hasta luego! 🔥" },
+];
+
+// =========================
+// 🧠 Buscar mejor respuesta
 // =========================
 function buscarMejorRespuesta(mensaje) {
-  const matches = memoriaGlobal.filter(c =>
-    similar(c.mensaje, mensaje)
-  );
+  const limpio = limpiar(mensaje);
 
+  // 🔹 1. Revisar preguntas predefinidas
+  for (const item of respuestasPredefinidas) {
+    if (similar(item.pregunta, limpio)) return item.respuesta;
+  }
+
+  // 🔹 2. Revisar memoria global
+  const matches = memoriaGlobal.filter(c => similar(c.mensaje, limpio));
   if (matches.length === 0) return null;
 
   // ⭐ ordenar por score
@@ -40,20 +57,19 @@ function buscarMejorRespuesta(mensaje) {
 }
 
 // =========================
-// 🤖 GENERAR RESPUESTA
+// 🤖 Generar respuesta
 // =========================
 function generarRespuesta(mensaje, usuario = "anonimo") {
   mensaje = limpiar(mensaje);
 
   if (!memoria[usuario]) memoria[usuario] = [];
 
-  // 🔥 1. BUSCAR EN IA GLOBAL
+  // 🔹 1. Buscar en preguntas predefinidas o memoria global
   const global = buscarMejorRespuesta(mensaje);
-  if (global) return global + " 🤖";
+  if (global) return global;
 
-  // 🔥 2. CONTEXTO USUARIO
+  // 🔹 2. Contexto usuario (respuestas aleatorias)
   const historial = memoria[usuario];
-
   if (historial.length > 0) {
     return random([
       "Cuéntame más 🤔",
@@ -62,7 +78,7 @@ function generarRespuesta(mensaje, usuario = "anonimo") {
     ]);
   }
 
-  // 🔥 3. RESPUESTA BASE
+  // 🔹 3. Respuesta base por defecto
   return random([
     "Hmm 🤖",
     "Explícate mejor 😎",
@@ -71,42 +87,31 @@ function generarRespuesta(mensaje, usuario = "anonimo") {
 }
 
 // =========================
-// 💾 GUARDAR MEMORIA
+// 💾 Guardar memoria
 // =========================
 function guardarMemoria(usuario, mensaje, respuesta) {
-  const data = {
-    mensaje,
-    respuesta,
-    score: 1
-  };
+  const data = { mensaje, respuesta, score: 1 };
 
-  // usuario
+  // Usuario
   if (!memoria[usuario]) memoria[usuario] = [];
   memoria[usuario].push(data);
+  if (memoria[usuario].length > 20) memoria[usuario].shift();
 
-  if (memoria[usuario].length > 20) {
-    memoria[usuario].shift();
-  }
+  // Memoria global (evitar duplicados)
+  const existente = memoriaGlobal.find(c => c.mensaje === mensaje && c.respuesta === respuesta);
+  if (existente) existente.score++;
+  else memoriaGlobal.push(data);
 
-  // 🔥 GLOBAL (evitar duplicados)
-  const existente = memoriaGlobal.find(c =>
-    c.mensaje === mensaje && c.respuesta === respuesta
-  );
-
-  if (existente) {
-    existente.score++; // ⭐ mejora ranking
-  } else {
-    memoriaGlobal.push(data);
-  }
-
-  // limitar memoria
-  if (memoriaGlobal.length > 2000) {
-    memoriaGlobal.shift();
-  }
+  // Limitar memoria global
+  if (memoriaGlobal.length > 2000) memoriaGlobal.shift();
 }
 
+// =========================
+// 📦 Exportar funciones
+// =========================
 module.exports = {
   generarRespuesta,
   guardarMemoria,
-  memoriaGlobal // 🔥 exportamos para API
+  memoriaGlobal,
+  respuestasPredefinidas, // puedes agregar nuevas respuestas desde aquí
 };
