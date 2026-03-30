@@ -393,7 +393,7 @@
 const API_URL = "https://mi-api-clnb.onrender.com";
 
 let ultimaKey = '';
-let usuarioGlobal = localStorage.getItem('usuarioGlobal') || '';
+let usuarioGlobal = '';
 
 // Cambiar tabs
 function switchTab(tab) {
@@ -406,7 +406,7 @@ function switchTab(tab) {
   } else {
     document.querySelectorAll('.tab')[1].classList.add('active');
     document.getElementById('panel-misapis').classList.add('active');
-    renderApis();
+    pedirUsuarioYRender();
   }
 }
 
@@ -433,7 +433,7 @@ async function generarKey() {
     ultimaKey = data.apiKey;
     usuarioGlobal = usuario;
 
-    // Guardar usuario para recordar después de recargar
+    // Guardar solo el usuario para persistencia
     localStorage.setItem('usuarioGlobal', usuarioGlobal);
 
     document.getElementById('keyGenerada').textContent = data.apiKey;
@@ -459,8 +459,8 @@ function copiarExistente(key) {
   navigator.clipboard.writeText(key).then(() => showToast('📋 Copiada'));
 }
 
-// 🔥 Obtener todas las keys del usuario desde DB
-async function renderApis() {
+// 🔥 Pedir nombre de usuario y mostrar sus keys
+async function pedirUsuarioYRender() {
   if (!usuarioGlobal) {
     const usuario = prompt("Escribe tu nombre de usuario para cargar tus keys:");
     if (!usuario) return;
@@ -468,6 +468,11 @@ async function renderApis() {
     localStorage.setItem('usuarioGlobal', usuarioGlobal);
   }
 
+  await renderApis();
+}
+
+// 🔥 Obtener todas las keys del usuario desde DB
+async function renderApis() {
   const lista = document.getElementById('listaApis');
   const contador = document.getElementById('contador');
 
@@ -515,10 +520,8 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 2500);
 }
 
-// 🔹 Si hay usuario guardado al cargar la página, ir a Mis APIs
-window.addEventListener('DOMContentLoaded', () => {
-  if (usuarioGlobal) switchTab('misapis');
-});
+// 🔹 NO cargar automáticamente las keys al recargar
+// Solo se cargan cuando el usuario ingresa su nombre
 </script>
 
 </body>
