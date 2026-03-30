@@ -206,6 +206,47 @@ app.post("/api/ia", async (req, res) => {
   }
 });
 
+// REGISTRO
+app.post("/api/register", async (req, res) => {
+  const { nombre, usuario, email, password } = req.body;
+  if (!usuario || !email || !password) return res.status(400).json({ error:"Faltan datos" });
+
+  try {
+    // 🔹 Guardar en tu DB externa
+    const response = await fetch("https://database-2poz.onrender.com/usuarios/guardar", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nombre, usuario, email, password })
+    });
+    const data = await response.json();
+    if (data.error) return res.status(400).json({ error: data.error });
+
+    res.json({ success:true, message:"Usuario registrado" });
+  } catch(err) {
+    console.error(err);
+    res.status(500).json({ error:"Error al registrar" });
+  }
+});
+
+// LOGIN
+app.post("/api/login", async (req,res) => {
+  const { usuario, password } = req.body;
+  if (!usuario || !password) return res.status(400).json({ error:"Faltan datos" });
+
+  try {
+    const response = await fetch(`https://database-2poz.onrender.com/usuarios/${usuario}`);
+    const data = await response.json();
+
+    if (!data || data.password !== password) return res.status(401).json({ error:"Usuario o contraseña inválidos" });
+
+    res.json({ success:true, usuario:data.usuario });
+  } catch(err) {
+    console.error(err);
+    res.status(500).json({ error:"Error login" });
+  }
+});
+
+
 // =========================
 // 🟢 ENDPOINT ROOT
 // =========================
