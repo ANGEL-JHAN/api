@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 const fs = require("fs");
-const fetch = require("node-fetch"); // 🔥 IMPORTANTE
+const fetch = require("node-fetch");
 const { generarRespuesta, guardarMemoria } = require("./ia");
 const { v4: uuidv4 } = require("uuid");
 
@@ -10,13 +10,14 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Servir archivos estáticos
+// Servir archivos
 app.use(express.static(path.join(__dirname)));
 
-// 🔑 ARCHIVO DE KEYS
+// =========================
+// 🔑 CONFIG KEYS (DB FAKE)
+// =========================
 const KEYS_FILE = "keys.json";
 
-// 🔹 API KEY base
 let apiKeys = [
   {
     usuario: "admin",
@@ -27,13 +28,21 @@ let apiKeys = [
   }
 ];
 
-// 🔹 Cargar keys guardadas
+// Cargar keys
 if (fs.existsSync(KEYS_FILE)) {
   const fileKeys = JSON.parse(fs.readFileSync(KEYS_FILE));
   apiKeys = [...apiKeys, ...fileKeys];
 }
 
-// 🔹 Obtener API KEY
+// Guardar keys
+function guardarKeys() {
+  fs.writeFileSync(
+    KEYS_FILE,
+    JSON.stringify(apiKeys.filter(k => k.apiKey !== "123456"), null, 2)
+  );
+}
+
+// Obtener API key
 function obtenerApiKey(req) {
   return req.headers["x-api-key"] || req.query.key;
 }
@@ -52,7 +61,7 @@ app.post("/api/generar-key", (req, res) => {
 
   const newKey = uuidv4();
 
-  const nuevaKeyObj = {
+  const nuevaKey = {
     usuario,
     apiKey: newKey,
     plan,
@@ -60,18 +69,45 @@ app.post("/api/generar-key", (req, res) => {
     limite: planes[plan] || 50
   };
 
-  apiKeys.push(nuevaKeyObj);
-
-  fs.writeFileSync(
-    KEYS_FILE,
-    JSON.stringify(apiKeys.filter(k => k.apiKey !== "123456"), null, 2)
-  );
+  apiKeys.push(nuevaKey);
+  guardarKeys();
 
   res.json({
     apiKey: newKey,
     plan,
-    limite: nuevaKeyObj.limite
+    limite: nuevaKey.limite
   });
+});
+
+// =========================
+// 🔑 OBTENER KEYS
+// =========================
+app.get("/api/mis-keys/:usuario", (req, res) => {
+  const { usuario } = req.params;
+
+  const keys = apiKeys
+    .filter(k => k.usuario === usuario)
+    .map(k => ({
+      apiKey: k.apiKey,
+      plan: k.plan,
+      uso: k.uso,
+      limite: k.limite,
+      restante: k.limite - k.uso
+    }));
+
+  res.json(keys);
+});
+
+// =========================
+// 🗑️ ELIMINAR KEY
+// =========================
+app.delete("/api/eliminar-key/:key", (req, res) => {
+  const { key } = req.params;
+
+  apiKeys = apiKeys.filter(k => k.apiKey !== key);
+  guardarKeys();
+
+  res.json({ success: true });
 });
 
 // =========================
@@ -82,7 +118,7 @@ app.get("/", (req, res) => {
 });
 
 // =========================
-// 🔐 VALIDACIÓN PRO
+// 🔐 VALIDACIÓN
 // =========================
 function validarKey(key, res) {
   const keyData = apiKeys.find(k => k.apiKey === key);
@@ -93,7 +129,7 @@ function validarKey(key, res) {
   }
 
   if (keyData.uso >= keyData.limite) {
-    res.status(403).json({ error: "Límite de uso alcanzado" });
+    res.status(403).json({ error: "Límite alcanzado" });
     return null;
   }
 
@@ -101,7 +137,7 @@ function validarKey(key, res) {
 }
 
 // =========================
-// 🤖 GET /api/ia
+// 🤖 IA (GET)
 // =========================
 app.get("/api/ia", async (req, res) => {
   const key = obtenerApiKey(req);
@@ -116,31 +152,26 @@ app.get("/api/ia", async (req, res) => {
     const respuesta = generarRespuesta(mensaje, usuario);
     guardarMemoria(usuario, mensaje, respuesta);
 
-    // 🔥 SUMAR USO
     keyData.uso++;
+    guardarKeys();
 
-    fs.writeFileSync(
-      KEYS_FILE,
-      JSON.stringify(apiKeys.filter(k => k.apiKey !== "123456"), null, 2)
-    );
-
-    // 💾 Guardar en DB
-    (async () => {
-      try {
-        await fetch("https://database-2poz.onrender.com/guardar", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            usuario,
-            mensaje,
-            respuesta,
-            fecha: new Date().toISOString()
-          })
-        });
-      } catch (err) {
-        console.error("❌ Error DB:", err.message);
-      }
-    })();
+    // Guardar en DB externa
+    try {
+      await fetch("https://database-2poz.onrender.com/guardar", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          usuario,
+          mensaje,
+          respuesta,
+          fecha: new Date().toISOString()
+        })
+      });
+    } catch (err) {
+      console.error("Error DB:", err.message);
+    }
 
     res.json({
       respuesta,
@@ -150,13 +181,13 @@ app.get("/api/ia", async (req, res) => {
     });
 
   } catch (err) {
-    console.error("❌ Error IA:", err);
-    res.status(500).json({ error: "Error procesando la IA" });
+    console.error(err);
+    res.status(500).json({ error: "Error IA" });
   }
 });
 
 // =========================
-// 🤖 POST /api/ia
+// 🤖 IA (POST)
 // =========================
 app.post("/api/ia", async (req, res) => {
   const key = obtenerApiKey(req);
@@ -171,31 +202,25 @@ app.post("/api/ia", async (req, res) => {
     const respuesta = generarRespuesta(mensaje, usuario);
     guardarMemoria(usuario, mensaje, respuesta);
 
-    // 🔥 SUMAR USO
     keyData.uso++;
+    guardarKeys();
 
-    fs.writeFileSync(
-      KEYS_FILE,
-      JSON.stringify(apiKeys.filter(k => k.apiKey !== "123456"), null, 2)
-    );
-
-    // 💾 Guardar en DB
-    (async () => {
-      try {
-        await fetch("https://database-2poz.onrender.com/guardar", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            usuario,
-            mensaje,
-            respuesta,
-            fecha: new Date().toISOString()
-          })
-        });
-      } catch (err) {
-        console.error("❌ Error DB:", err.message);
-      }
-    })();
+    try {
+      await fetch("https://database-2poz.onrender.com/guardar", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          usuario,
+          mensaje,
+          respuesta,
+          fecha: new Date().toISOString()
+        })
+      });
+    } catch (err) {
+      console.error("Error DB:", err.message);
+    }
 
     res.json({
       respuesta,
@@ -205,8 +230,8 @@ app.post("/api/ia", async (req, res) => {
     });
 
   } catch (err) {
-    console.error("❌ Error IA:", err);
-    res.status(500).json({ error: "Error procesando la IA" });
+    console.error(err);
+    res.status(500).json({ error: "Error IA" });
   }
 });
 
@@ -227,13 +252,14 @@ app.post("/chat", (req, res) => {
     res.json({ respuesta });
 
   } catch (err) {
-    console.error("❌ Error /chat:", err);
-    res.status(500).json({ error: "Error procesando la IA" });
+    res.status(500).json({ error: "Error IA" });
   }
 });
 
+// =========================
 // 🚀 SERVER
+// =========================
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`🤖 JHAN-IA corriendo en puerto ${PORT}`);
+  console.log(`🔥 JHAN-IA corriendo en puerto ${PORT}`);
 });
