@@ -389,12 +389,12 @@
 
   <div class="toast" id="toast"></div>
 
-  <script>
-const API_URL = "https://mi-api-clnb.onrender.com";
+  const API_URL = "https://mi-api-clnb.onrender.com";
 
 let ultimaKey = '';
 let usuarioGlobal = '';
 
+// Cambiar de tabs
 function switchTab(tab) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
@@ -409,7 +409,7 @@ function switchTab(tab) {
   }
 }
 
-// 🔥 GENERAR KEY DESDE TU API
+// 🔥 GENERAR KEY DESDE TU API Y GUARDAR EN DB
 async function generarKey() {
   const usuario = document.getElementById('usuario').value.trim();
   if (!usuario) {
@@ -420,26 +420,24 @@ async function generarKey() {
   const plan = document.getElementById('plan').value;
 
   try {
+    // 1️⃣ Generar key desde tu API
     const res = await fetch(`${API_URL}/api/generar-key`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ usuario, plan })
     });
-
     const data = await res.json();
 
-    if (!data.apiKey) throw new Error("Error");
+    if (!data.apiKey) throw new Error("Error generando key");
 
     ultimaKey = data.apiKey;
     usuarioGlobal = usuario;
 
     document.getElementById('keyGenerada').textContent = data.apiKey;
     document.getElementById('resultado').classList.add('show');
-
     document.getElementById('usuario').value = '';
-    showToast('✅ API Key creada en servidor');
+
+    showToast('✅ API Key creada y guardada en DB');
 
   } catch (err) {
     showToast('❌ Error conectando con la API');
@@ -450,31 +448,27 @@ async function generarKey() {
 // 📋 COPIAR
 function copiarKey() {
   if (!ultimaKey) return;
-  navigator.clipboard.writeText(ultimaKey)
-    .then(() => showToast('📋 Copiada'));
+  navigator.clipboard.writeText(ultimaKey).then(() => showToast('📋 Copiada'));
 }
-
 function copiarExistente(key) {
-  navigator.clipboard.writeText(key)
-    .then(() => showToast('📋 Copiada'));
+  navigator.clipboard.writeText(key).then(() => showToast('📋 Copiada'));
 }
 
-// 🔥 OBTENER KEYS DESDE TU API
+// 🔥 OBTENER KEYS DESDE DB
 async function renderApis() {
-  let usuario = usuarioGlobal || prompt("Ingresa tu usuario");
-
-  if (!usuario) return;
-
-  usuarioGlobal = usuario;
+  if (!usuarioGlobal) {
+    showToast('⚠️ Primero genera una API para ver tus keys');
+    return;
+  }
 
   const lista = document.getElementById('listaApis');
   const contador = document.getElementById('contador');
 
   try {
-    const res = await fetch(`${API_URL}/api/mis-keys/${usuario}`);
+    const res = await fetch(`${API_URL}/api/mis-keys/${usuarioGlobal}`);
     const keys = await res.json();
 
-    if (!keys.length) {
+    if (!Array.isArray(keys) || keys.length === 0) {
       lista.innerHTML = '<div class="empty-state"><div class="empty-icon">🔑</div>No tienes API keys</div>';
       contador.innerHTML = '';
       return;
@@ -486,18 +480,17 @@ async function renderApis() {
       enterprise: 'type-enterprise'
     };
 
-    lista.innerHTML = keys.map((k, i) =>
+    lista.innerHTML = keys.map(k =>
       `<li class="api-item">
         <div class="api-item-header">
-          <span class="api-item-user">${usuario}</span>
+          <span class="api-item-user">${usuarioGlobal}</span>
           <span class="api-item-type ${typeClass[k.plan] || 'type-standard'}">${k.plan}</span>
         </div>
         <div class="api-item-key">${k.apiKey}</div>
         <div class="api-item-actions">
           <button class="btn-small" onclick="copiarExistente('${k.apiKey}')">📋 Copiar</button>
         </div>
-      </li>`
-    ).join('');
+      </li>`).join('');
 
     contador.innerHTML = `Total: <span>${keys.length}</span> API keys`;
 
@@ -514,7 +507,6 @@ function showToast(msg) {
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2500);
 }
-</script>
 
 </body>
 </html>
