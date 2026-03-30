@@ -46,38 +46,38 @@ function togglePassword(id,btn){
 function showToast(msg,type){
     const t=document.getElementById('toast');
     t.textContent=msg;
-    t.className='toast '+(type||'')+' show';
+    t.className='toast '+type+' show';
     setTimeout(()=>t.classList.remove('show'),3000);
 }
 
 // ============================
 // 🌐 API URL - Database
 // ============================
-const API_URL = "https://mi-api-clnb.onrender.com";
+const API_URL = "https://database-2poz.onrender.com";
 
 // ============================
 // 🔹 Signup Form
 // ============================
 document.getElementById('signupForm').addEventListener('submit', async function(e){
     e.preventDefault();
-    const nombre = document.getElementById('signupName').value.trim();
-    const usuario = document.getElementById('signupUser').value.trim();
+    const name = document.getElementById('signupName').value.trim();
+    const user = document.getElementById('signupUser').value.trim();
     const email = document.getElementById('signupEmail').value.trim();
     const pass = document.getElementById('signupPassword').value;
 
-    if(!nombre||!usuario||!email||!pass) return showToast('Completa todos los campos','error');
+    if(!name||!user||!email||!pass) return showToast('Completa todos los campos','error');
     if(pass.length<8) return showToast('Mínimo 8 caracteres','error');
 
     try {
-        const res = await fetch(`${API_URL}/api/register`, {
+        const res = await fetch(`${API_URL}/register`, {
             method:"POST",
             headers:{"Content-Type":"application/json"},
-            body: JSON.stringify({ nombre, usuario, email, password:pass })
+            body: JSON.stringify({name,user,email,password:pass})
         });
         const data = await res.json();
-        if(res.ok && data.success){
+        if(res.ok){
             showToast('¡Cuenta creada! ✅','success');
-            setTimeout(()=>window.location.href='index.html',1500); // Redirige directo
+            setTimeout(()=>showLogin(),1500);
         } else {
             showToast(data.error||'Error al registrarse','error');
         }
@@ -92,23 +92,24 @@ document.getElementById('signupForm').addEventListener('submit', async function(
 // ============================
 document.getElementById('loginForm').addEventListener('submit', async function(e){
     e.preventDefault();
-    const usuario = document.getElementById('loginEmail').value.trim();
+    const email = document.getElementById('loginEmail').value.trim();
     const pass = document.getElementById('loginPassword').value;
 
-    if(!usuario||!pass) return showToast('Completa todos los campos','error');
+    if(!email||!pass) return showToast('Completa todos los campos','error');
 
     try {
-        const res = await fetch(`${API_URL}/api/login`, {
+        const res = await fetch(`${API_URL}/login`, {
             method:"POST",
             headers:{"Content-Type":"application/json"},
-            body: JSON.stringify({ usuario, password:pass })
+            body: JSON.stringify({email,password:pass})
         });
         const data = await res.json();
-        if(res.ok && data.success){
+        if(res.ok){
+            localStorage.setItem('user_session', JSON.stringify({logged:true,...data.user}));
             showToast('¡Inicio de sesión exitoso! ✅','success');
-            setTimeout(()=>window.location.href='index.html',1000); // Redirige a API keys
+            setTimeout(()=>window.location.href='index.html',1000);
         } else {
-            showToast(data.error||'Usuario o contraseña incorrectos','error');
+            showToast(data.error||'Email o contraseña incorrectos','error');
         }
     } catch(err){
         console.error(err);
@@ -120,48 +121,16 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
 // 🔹 Inicializar Página
 // ============================
 document.addEventListener('DOMContentLoaded',()=>{
-    // Siempre mostrar login al cargar
-    showLogin();
-});
-
-// ============================
-// 🔹 Inicializar Página Inteligente
-// ============================
-document.addEventListener('DOMContentLoaded', async () => {
     const session = JSON.parse(localStorage.getItem('user_session'));
 
-    // 1️⃣ Si ya está logueado → redirige
-    if (session?.logged) {
-        window.location.href = 'index.html';
+    // Si ya está logueado, redirige
+    if(session?.logged){
+        window.location.href='index.html';
         return;
     }
 
-    // 2️⃣ Si no hay sesión, mostrar login o signup según si el usuario existe
-    // Pedimos al usuario su email/usuario para chequear
-    let userCheck = prompt("Ingresa tu email o usuario para continuar:");
-
-    if (!userCheck || userCheck.trim() === "") {
-        // Si no ingresa nada, mostramos el signup por defecto
-        showSignup();
-        return;
-    }
-
-    try {
-        const res = await fetch(`${API_URL}/check-user/${encodeURIComponent(userCheck.trim())}`);
-        const data = await res.json();
-
-        if (data.exists) {
-            // Usuario ya existe → mostrar login
-            document.getElementById('loginEmail').value = userCheck.trim();
-            showLogin();
-        } else {
-            // Usuario nuevo → mostrar signup y prellenar usuario/email
-            document.getElementById('signupUser').value = userCheck.trim();
-            showSignup();
-        }
-    } catch (err) {
-        console.error(err);
-        showToast("Error verificando usuario. Se mostrará registro por defecto.", "error");
-        showSignup();
-    }
+    // Mostrar el formulario deseado al inicio
+    // Cambia a showSignup() si quieres que aparezca primero el registro
+    showLogin();
+    // showSignup();
 });
