@@ -1,5 +1,4 @@
 const fs = require("fs");
-const respuestas = require("./respuestas");
 
 const DATA_FILE = "memoria.json";
 
