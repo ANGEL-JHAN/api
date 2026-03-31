@@ -382,6 +382,22 @@
             <option value="enterprise">Enterprise</option>
           </select>
         </div>
+
+<!-- Botón Cerrar Sesión -->
+<button id="logoutBtn" class="btn-secondary">Cerrar sesión</button>
+
+<script>
+// ============================
+// 🔹 Cerrar sesión
+// ============================
+document.getElementById('logoutBtn').addEventListener('click', () => {
+    localStorage.removeItem('user_session');
+    alert('Has cerrado sesión ✅');
+    window.location.href = 'signup.html'; // vuelve al login
+});
+</script>
+
+
         <button class="btn-primary" onclick="generarKey()">Generar API Key</button>
 
         <div class="result" id="resultado">
@@ -395,23 +411,6 @@
     <!-- Panel Mis APIs -->
     <div id="panel-misapis" class="panel">
       <div class="card">
-
-
-<!-- Botón Cerrar Sesión -->
-<button id="logoutBtn" class="btn-secondary">Cerrar sesión</button>
-
-<script>
-// ============================
-// 🔹 Cerrar sesión
-// ============================
-document.getElementById('logoutBtn').addEventListener('click', () => {
-    localStorage.removeItem('user_session');
-    alert('Has cerrado sesión ✅');
-    window.location.href = 'login.html'; // vuelve al login
-});
-</script>
-
-
         <div class="card-title">Mis API Keys</div>
         <ul class="api-list" id="listaApis"></ul>
       </div>
