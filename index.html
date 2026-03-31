@@ -380,6 +380,23 @@
       <div class="card">
         <div class="card-title">Mis API Keys</div>
         <ul class="api-list" id="listaApis"></ul>
+
+
+<!-- Botón Cerrar Sesión -->
+<button id="logoutBtn" class="btn-secondary">Cerrar sesión</button>
+
+<script>
+// ============================
+// 🔹 Cerrar sesión
+// ============================
+document.getElementById('logoutBtn').addEventListener('click', () => {
+    localStorage.removeItem('user_session');
+    alert('Has cerrado sesión ✅');
+    window.location.href = 'login.html'; // vuelve al login
+});
+</script>
+
+
       </div>
       <div class="counter" id="contador"></div>
     </div>
