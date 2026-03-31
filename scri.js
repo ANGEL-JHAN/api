@@ -53,7 +53,7 @@ function showToast(msg,type){
 // ============================
 // 🌐 API URL - Database
 // ============================
-const API_URL = "https://database-2poz.onrender.com";
+const API_URL = "https://database-2poz.onrender.com"; // Tu API si quieres
 
 // ============================
 // 🔹 Signup Form
@@ -68,52 +68,42 @@ document.getElementById('signupForm').addEventListener('submit', async function(
     if(!name||!user||!email||!pass) return showToast('Completa todos los campos','error');
     if(pass.length<8) return showToast('Mínimo 8 caracteres','error');
 
-    try {
-        const res = await fetch(`${API_URL}/register`, {
-            method:"POST",
-            headers:{"Content-Type":"application/json"},
-            body: JSON.stringify({name,user,email,password:pass})
-        });
-        const data = await res.json();
-        if(res.ok){
-            showToast('¡Cuenta creada! ✅','success');
-            setTimeout(()=>showLogin(),1500);
-        } else {
-            showToast(data.error||'Error al registrarse','error');
-        }
-    } catch(err){
-        console.error(err);
-        showToast('Error de conexión con la API','error');
-    }
+    // Aquí puedes enviar a tu API real si quieres
+    // const res = await fetch(`${API_URL}/register`, {...})
+
+    // Solo local (mock)
+    const newUser = {name,user,email,password:pass};
+    localStorage.setItem('new_user', JSON.stringify(newUser));
+
+    showToast('¡Cuenta creada! Ahora inicia sesión','success');
+    setTimeout(()=>showLogin(),1500);
 });
 
 // ============================
 // 🔹 Login Form
 // ============================
-document.getElementById('loginForm').addEventListener('submit', async function(e){
+document.getElementById('loginForm').addEventListener('submit', function(e){
     e.preventDefault();
-    const email = document.getElementById('loginEmail').value.trim();
+    const emailOrUser = document.getElementById('loginEmail').value.trim();
     const pass = document.getElementById('loginPassword').value;
 
-    if(!email||!pass) return showToast('Completa todos los campos','error');
+    if(!emailOrUser||!pass) return showToast('Completa todos los campos','error');
 
-    try {
-        const res = await fetch(`${API_URL}/login`, {
-            method:"POST",
-            headers:{"Content-Type":"application/json"},
-            body: JSON.stringify({email,password:pass})
-        });
-        const data = await res.json();
-        if(res.ok){
-            localStorage.setItem('user_session', JSON.stringify({logged:true,...data.user}));
-            showToast('¡Inicio de sesión exitoso! ✅','success');
-            setTimeout(()=>window.location.href='index.html',1000);
-        } else {
-            showToast(data.error||'Email o contraseña incorrectos','error');
-        }
-    } catch(err){
-        console.error(err);
-        showToast('Error de conexión con la API','error');
+    // Solo local (mock)
+    const newUser = JSON.parse(localStorage.getItem('new_user'));
+    if(!newUser){
+        showToast('Usuario no registrado, crea tu cuenta','error');
+        showSignup();
+        return;
+    }
+
+    if((emailOrUser === newUser.email || emailOrUser === newUser.user) && pass === newUser.password){
+        // Guardamos sesión
+        localStorage.setItem('user_session', JSON.stringify({logged:true,name:newUser.name,user:newUser.user,email:newUser.email}));
+        showToast('¡Inicio de sesión exitoso!','success');
+        setTimeout(()=>window.location.href='index.html',1000);
+    } else {
+        showToast('Email/Usuario o contraseña incorrectos','error');
     }
 });
 
@@ -129,8 +119,6 @@ document.addEventListener('DOMContentLoaded',()=>{
         return;
     }
 
-    // Mostrar el formulario deseado al inicio
-    // Cambia a showSignup() si quieres que aparezca primero el registro
+    // Mostrar login por defecto (puedes cambiar a showSignup() si quieres)
     showLogin();
-    // showSignup();
 });
