@@ -122,3 +122,11 @@ document.addEventListener('DOMContentLoaded',()=>{
     // Mostrar login por defecto (puedes cambiar a showSignup() si quieres)
     showLogin();
 });
+
+// ============================
+// 🔹 Inicializar Página
+// ============================
+document.addEventListener('DOMContentLoaded', () => {
+    // Siempre mostrar el login al entrar
+    showLogin(); // esto asegura que se vea la tarjeta de login
+});
