@@ -9,7 +9,9 @@ const fs = require("fs");
 const { generarRespuesta, guardarMemoria } = require("./ia");
 const { v4: uuidv4 } = require("uuid");
 
+// =========================
 // 🔥 SUPABASE
+// =========================
 const { createClient } = require("@supabase/supabase-js");
 
 const supabase = createClient(
@@ -17,7 +19,9 @@ const supabase = createClient(
   process.env.SUPABASE_KEY
 );
 
+// =========================
 // 🔥 FIX fetch para Node / Render
+// =========================
 const fetch = (...args) =>
   import("node-fetch").then(({ default: fetch }) => fetch(...args));
 
@@ -33,6 +37,7 @@ app.use(cors({
 }));
 
 app.use(express.json());
+
 app.use(express.static(path.join(__dirname)));
 
 // =========================
@@ -42,22 +47,34 @@ const KEYS_FILE = "keys.json";
 
 // Crear archivo si no existe
 if (!fs.existsSync(KEYS_FILE)) {
+
   fs.writeFileSync(KEYS_FILE, "[]");
 }
 
-// Key admin (uso ilimitado)
+// =========================
+// 🔥 KEY ADMIN
+// =========================
 let apiKeys = [
   {
     usuario: "admin",
-    apiKey: process.env.ADMIN_KEY || "123456",
+
+    apiKey:
+      process.env.ADMIN_KEY || "123456",
+
     plan: "admin",
+
     uso: 0,
+
     limite: Infinity,
-    ultimoReset: new Date().toISOString()
+
+    ultimoReset:
+      new Date().toISOString()
   }
 ];
 
-// Cargar keys externas
+// =========================
+// 🔥 CARGAR KEYS
+// =========================
 try {
 
   const fileKeys = JSON.parse(
@@ -66,6 +83,7 @@ try {
 
   apiKeys = [
     ...apiKeys,
+
     ...fileKeys.filter(
       fk => !apiKeys.some(
         k => k.apiKey === fk.apiKey
@@ -80,16 +98,21 @@ try {
   );
 }
 
-// Guardar keys
+// =========================
+// 🔥 GUARDAR KEYS
+// =========================
 function guardarKeys() {
 
   fs.writeFileSync(
+
     KEYS_FILE,
 
     JSON.stringify(
+
       apiKeys.filter(
         k => k.plan !== "admin"
       ),
+
       null,
       2
     )
@@ -97,7 +120,7 @@ function guardarKeys() {
 }
 
 // =========================
-// 🔹 Obtener API key
+// 🔥 OBTENER API KEY
 // =========================
 function obtenerApiKey(req) {
 
@@ -108,7 +131,7 @@ function obtenerApiKey(req) {
 }
 
 // =========================
-// 🔹 Validar y reset diario
+// 🔥 VALIDAR KEY
 // =========================
 function validarKey(key, res) {
 
@@ -134,7 +157,9 @@ function validarKey(key, res) {
     return null;
   }
 
-  // Reset diario cada 24h
+  // =========================
+  // 🔥 RESET 24H
+  // =========================
   if (keyData.plan !== "admin") {
 
     const ahora = new Date();
@@ -167,7 +192,7 @@ function validarKey(key, res) {
 }
 
 // =========================
-// 🔹 GENERAR NUEVA KEY
+// 🔥 GENERAR NUEVA KEY
 // =========================
 app.post("/api/generar-key", async (req, res) => {
 
@@ -203,14 +228,17 @@ app.post("/api/generar-key", async (req, res) => {
 
     limite:planes[plan],
 
-    ultimoReset:new Date().toISOString()
+    ultimoReset:
+      new Date().toISOString()
   };
 
   apiKeys.push(nuevaKey);
 
   guardarKeys();
 
-  // 🔥 Guardar también en DB externa
+  // =========================
+  // 🔥 DB EXTERNA
+  // =========================
   try {
 
     await fetch(
@@ -229,7 +257,7 @@ app.post("/api/generar-key", async (req, res) => {
   } catch(err) {
 
     console.error(
-      "❌ Error guardando en DB externa:",
+      "❌ Error DB externa:",
       err.message
     );
   }
@@ -242,7 +270,7 @@ app.post("/api/generar-key", async (req, res) => {
 });
 
 // =========================
-// 🔹 OBTENER KEYS DE UN USUARIO
+// 🔥 OBTENER KEYS
 // =========================
 app.get("/api/mis-keys/:usuario", async (req, res) => {
 
@@ -267,7 +295,7 @@ app.get("/api/mis-keys/:usuario", async (req, res) => {
 });
 
 // =========================
-// 🗑️ ELIMINAR KEY
+// 🔥 ELIMINAR KEY
 // =========================
 app.delete("/api/eliminar-key/:key", (req, res) => {
 
@@ -319,7 +347,7 @@ app.post("/api/ia", async (req, res) => {
   try {
 
     // =========================
-    // 🔥 GUARDAR MEMORIA SUPABASE
+    // 🔥 GUARDAR MEMORIA
     // =========================
     await supabase
       .from("memoria")
@@ -354,20 +382,23 @@ app.post("/api/ia", async (req, res) => {
     // 🔥 PROMPT IA
     // =========================
     const promptIA = `
+
 MEMORIA:
 ${memoriaTexto}
 
 USUARIO:
 ${mensaje}
+
 `;
 
     // =========================
     // 🔥 RESPUESTA IA
     // =========================
-    const respuesta = await generarRespuesta(
-  promptIA,
-  usuario
-);
+    const respuesta =
+      await generarRespuesta(
+        promptIA,
+        usuario
+      );
 
     // =========================
     // 🔥 MEMORIA LOCAL
@@ -448,7 +479,7 @@ ${mensaje}
 });
 
 // =========================
-// 🔹 REGISTRO
+// 🔹 REGISTRO SUPABASE
 // =========================
 app.post("/api/register", async (req, res) => {
 
@@ -459,7 +490,12 @@ app.post("/api/register", async (req, res) => {
     password
   } = req.body;
 
-  if (!usuario || !email || !password) {
+  if (
+    !nombre ||
+    !usuario ||
+    !email ||
+    !password
+  ) {
 
     return res.status(400).json({
       error:"Faltan datos"
@@ -468,36 +504,42 @@ app.post("/api/register", async (req, res) => {
 
   try {
 
-    const response = await fetch(
-      "https://database-2poz.onrender.com/usuarios/guardar",
-      {
-        method:"POST",
+    const {
+      data,
+      error
+    } = await supabase.auth.signUp({
 
-        headers:{
-          "Content-Type":"application/json"
-        },
+      email,
+      password,
 
-        body: JSON.stringify({
+      options: {
+
+        data: {
           nombre,
-          usuario,
-          email,
-          password
-        })
+          usuario
+        }
+
       }
-    );
 
-    const data = await response.json();
+    });
 
-    if (data.error) {
+    if (error) {
 
       return res.status(400).json({
-        error:data.error
+        error:error.message
       });
     }
 
     res.json({
+
       success:true,
-      message:"Usuario registrado"
+
+      message:"Usuario registrado correctamente",
+
+      user:data.user,
+
+      session:data.session
+
     });
 
   } catch(err) {
@@ -511,16 +553,16 @@ app.post("/api/register", async (req, res) => {
 });
 
 // =========================
-// 🔹 LOGIN
+// 🔹 LOGIN SUPABASE
 // =========================
 app.post("/api/login", async (req,res) => {
 
   const {
-    usuario,
+    email,
     password
   } = req.body;
 
-  if (!usuario || !password) {
+  if (!email || !password) {
 
     return res.status(400).json({
       error:"Faltan datos"
@@ -529,22 +571,40 @@ app.post("/api/login", async (req,res) => {
 
   try {
 
-    const response = await fetch(
-      `https://database-2poz.onrender.com/usuarios/${usuario}`
-    );
+    const {
+      data,
+      error
+    } = await supabase.auth.signInWithPassword({
 
-    const data = await response.json();
+      email,
+      password
 
-    if (!data || data.password !== password) {
+    });
+
+    if (error) {
 
       return res.status(401).json({
-        error:"Usuario o contraseña inválidos"
+        error:error.message
       });
     }
 
     res.json({
+
       success:true,
-      usuario:data.usuario
+
+      message:"Login exitoso",
+
+      token:
+        data.session.access_token,
+
+      refresh_token:
+        data.session.refresh_token,
+
+      expires_at:
+        data.session.expires_at,
+
+      user:data.user
+
     });
 
   } catch(err) {
@@ -558,7 +618,7 @@ app.post("/api/login", async (req,res) => {
 });
 
 // =========================
-// 🟢 ENDPOINT ROOT
+// 🟢 ROOT
 // =========================
 app.get("/", (req,res)=> {
 
