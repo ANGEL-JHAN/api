@@ -483,6 +483,8 @@ ${mensaje}
 // =========================
 app.post("/api/register", async (req, res) => {
 
+  console.log("🔥 BODY:", req.body);
+
   const {
     nombre,
     usuario,
@@ -504,6 +506,8 @@ app.post("/api/register", async (req, res) => {
 
   try {
 
+    console.log("🔥 Intentando registrar...");
+
     const {
       data,
       error
@@ -522,6 +526,9 @@ app.post("/api/register", async (req, res) => {
       }
 
     });
+
+    console.log("🔥 DATA:", data);
+    console.log("🔥 ERROR:", error);
 
     if (error) {
 
@@ -544,10 +551,10 @@ app.post("/api/register", async (req, res) => {
 
   } catch(err) {
 
-    console.error(err);
+    console.error("❌ REGISTER ERROR:", err);
 
     res.status(500).json({
-      error:"Error al registrar"
+      error:err.message
     });
   }
 });
