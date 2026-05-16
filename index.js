@@ -364,10 +364,10 @@ ${mensaje}
     // =========================
     // 🔥 RESPUESTA IA
     // =========================
-    const respuesta = generarRespuesta(
-      promptIA,
-      usuario
-    );
+    const respuesta = await generarRespuesta(
+  promptIA,
+  usuario
+);
 
     // =========================
     // 🔥 MEMORIA LOCAL
