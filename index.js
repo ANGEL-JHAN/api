@@ -45,7 +45,9 @@ app.use(express.static(path.join(__dirname)));
 // =========================
 const KEYS_FILE = "keys.json";
 
-// Crear archivo si no existe
+// =========================
+// 🔥 CREAR ARCHIVO SI NO EXISTE
+// =========================
 if (!fs.existsSync(KEYS_FILE)) {
 
   fs.writeFileSync(KEYS_FILE, "[]");
@@ -236,32 +238,7 @@ app.post("/api/generar-key", async (req, res) => {
 
   guardarKeys();
 
-  // =========================
-  // 🔥 DB EXTERNA
-  // =========================
-  try {
-
-    await fetch(
-      "https://database-2poz.onrender.com/guardar-key",
-      {
-        method:"POST",
-
-        headers:{
-          "Content-Type":"application/json"
-        },
-
-        body: JSON.stringify(nuevaKey)
-      }
-    );
-
-  } catch(err) {
-
-    console.error(
-      "❌ Error DB externa:",
-      err.message
-    );
-  }
-
+  // ✅ RESPUESTA
   res.json({
     apiKey:newKey,
     plan,
@@ -420,37 +397,6 @@ ${mensaje}
     }
 
     // =========================
-    // 🔥 DB EXTERNA
-    // =========================
-    try {
-
-      await fetch(
-        "https://database-2poz.onrender.com/guardar",
-        {
-          method:"POST",
-
-          headers:{
-            "Content-Type":"application/json"
-          },
-
-          body: JSON.stringify({
-            usuario,
-            mensaje,
-            respuesta,
-            fecha:new Date().toISOString()
-          })
-        }
-      );
-
-    } catch(err) {
-
-      console.error(
-        "❌ DB externa:",
-        err.message
-      );
-    }
-
-    // =========================
     // ✅ RESPUESTA FINAL
     // =========================
     res.json({
@@ -470,10 +416,10 @@ ${mensaje}
 
   } catch(err) {
 
-    console.error(err);
+    console.error("❌ ERROR IA:", err);
 
     res.status(500).json({
-      error:"Error IA"
+      error:err.message
     });
   }
 });
@@ -559,7 +505,6 @@ app.post("/api/register", async (req, res) => {
   }
 });
 
-
 // =========================
 // 🔹 LOGIN SUPABASE
 // =========================
@@ -617,7 +562,7 @@ app.post("/api/login", async (req,res) => {
 
   } catch(err) {
 
-    console.error(err);
+    console.error("❌ LOGIN ERROR:", err);
 
     res.status(500).json({
       error:"Error login"
